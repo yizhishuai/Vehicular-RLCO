@@ -46,12 +46,16 @@ def makeFigure(x_axis, y_axis, optimal=None, labels=[], legend=[], log=False):
         plt.legend(legend)#, fontsize=16)
 
 # Funtion that creates, fills and labels a histogram with given parameters
-def makeFigureHist(y_axis, bins=10, labels=[], legend=[]):
+def makeFigureHist(y_axis, bins=10, labels=[], legend=[], thresh=None):
     
     # Create and plot figure
     plt.figure(figsize=[10,5])
-    for a in range(len(y_axis)):
-        plt.hist(y_axis[a], bins=bins)
+    plt.hist(y_axis, bins=bins)
+    
+    # Add threshhold line
+    if(thresh):
+        plt.axvline(thresh, color='k', linestyle='--')
+        legend.insert(0, 'Max tolerable delay')
     
     # Label figure
     if labels:
@@ -158,8 +162,8 @@ def train_scenario(env):
     """
     print('---TRAINING---')
     # Number of time steps to archive a stationary state in the network
-    start_up = 50000
-    n_time_steps = 210000 # For 10^-3 precision -> ~10^5 sample points
+    start_up = 1000
+    n_time_steps = 110000 # For 10^-3 precision -> ~10^5 sample points
     # Number of last episodes to use for average reward calculation
     averaging_window = 10000
     x_axis = range(1, start_up+n_time_steps+1) # X axis for ploting results
@@ -288,7 +292,7 @@ def train_scenario(env):
     # Testing total delays of each petition per application
     test_app_delays = []
     print('\n---TESTING---')
-    n_time_steps = 100000
+    n_time_steps = 10000
     for batch in range(len(agents)):
         batch_success_rate = []
         batch_act_distribution = []
@@ -398,7 +402,7 @@ def train_scenario(env):
         # Store the average total delay per application of best agent of batch
         test_app_delay_avg.append(batch_app_delay_avg[best_agent])
         
-        # Store the delay distribution er application of best agent of batch
+        # Store the delay distribution per application of best agent of batch
         test_app_delays.append(batch_app_delays[best_agent])
         
         # Calculate the averages of successfully processed applications
@@ -409,6 +413,7 @@ def train_scenario(env):
         # processing nodes of best agent
         test_act_distribution.append(batch_act_distribution[best_agent])
         
+        """
         # Create graphs
         if(__name__ == "__main__"):
             # Create histogram for best replica (app delay distribution)
@@ -416,10 +421,24 @@ def train_scenario(env):
                       'Total application delay distribution ('
                       + agents[batch][0][1] + ' - Best' + ')']
             legend = []
-            for i in range(1, len(env.apps) + 1):
+            for i in range(1, n_apps + 1):
                 legend.append('Application ' + str(i)) #Placeholder?
-            bins = 64
+            bins = 10
             makeFigureHist(test_app_delays[batch], bins, labels, legend)
+        """
+    
+    # Create histogram of delays of each application (only best agents)
+    if(__name__ == "__main__"):
+        for i in range(n_apps):
+            labels = ['Total application delay', '', env.app_info[i]]
+            legend = []
+            y_axis = []
+            for batch in range(len(test_act_distribution)):
+                legend.append(agents[batch][0][1] + '(best)')
+                y_axis.append(test_app_delays[batch][i])
+            bins = 10
+            max_delay = env.apps_max_delay[i]
+            makeFigureHist(y_axis, bins, labels, legend, max_delay)
     
     """
     return {'train_block_probabilities': average_block_prob,

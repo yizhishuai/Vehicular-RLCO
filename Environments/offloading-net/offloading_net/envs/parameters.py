@@ -44,6 +44,7 @@ app_cost = data['cost'].values.tolist()
 app_data_in = data['data_in'].values.tolist()
 app_data_out = data['data_out'].values.tolist()
 app_max_delay = data['max_delay'].values.tolist()
+app_info = data['info'].values.tolist()
 
 # Count network nodes (with and without vehicles, marked as type 4)
 n_nodes = len(node_type)

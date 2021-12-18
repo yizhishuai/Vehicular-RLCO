@@ -13,7 +13,7 @@ from gym import spaces
 
 from .traffic_generator import traffic_generator
 from .core_manager import core_manager
-from .parameters import links, links_rate, links_delay, node_type, node_clock, node_cores, n_nodes, net_nodes, all_paths, node_comb, apps
+from .parameters import links, links_rate, links_delay, node_type, node_clock, node_cores, n_nodes, net_nodes, all_paths, node_comb, apps, app_max_delay, app_info
 
 """
 Explanation on implemented discrete event simulator:
@@ -31,6 +31,10 @@ class offload_netEnv(gym.Env):
         self.node_type = node_type
         # App type list (used as information for metrics during testing)
         self.apps = apps
+        # App description list (used as information for metrics during testing)
+        self.app_info = app_info
+        # Maximum tolerable delay of each application
+        self.apps_max_delay = app_max_delay
         
         # Type of next application
         self.app = 0
