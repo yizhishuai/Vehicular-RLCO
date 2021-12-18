@@ -22,11 +22,14 @@ class core_manager():
         # Available time slots's start time
         self.slots_start = []
         
+        # Lists that hold info on reservations for all cores (except cloud)
+        # Current remaining number of possible reservations
+        self.queue_limit = []
+        # Times at with each reservation will finish processing
+        self.reserv_end = []
+        
         # Limit for relative core load calculation (in ms)
         self.time_limit = 100
-        
-        # Limit of queue
-        self.queue_limit = 100
     
     def reserve(self, action, forward_delay, proc_delay, return_delay):
         
@@ -35,7 +38,7 @@ class core_manager():
         next_core = []
         for core, f in enumerate(self.slots_duration[action]):
             # If core queue has too many reservations ignore it
-            if(len(self.slots_start[action][core]) >= self.queue_limit):
+            if(self.queue_limit[action][core] == 0):
                 available.append(np.array([])) # Empty append to match indexes
                 continue
             # Look for slots with sufficient durations (if fully usable)
@@ -71,12 +74,19 @@ class core_manager():
         total_delay = (max(forward_delay, self.slots_start[action][core][slot])
                        + proc_delay + return_delay)
         
+        # Register the reservation
+        self.queue_limit[action][core] -= 1
+        
         # Assign the reservation to the first available time slot
         # If arrival of data is prior to slot's start
         if(forward_delay <= self.slots_start[action][core][slot]):
             # Shorten the slot
             self.slots_start[action][core][slot] += proc_delay
             self.slots_duration[action][core][slot] -= proc_delay
+            # Register the reservation's end time
+            self.reserv_end[action][core] = np.sort(np.append(
+                self.reserv_end[action][core],
+                self.slots_start[action][core][slot]))
             # Delete the slot if it is null (unless it is the end of the queue)
             if(self.slots_duration[action][core][slot] == 0 and
                len(self.slots_start[action][core]) - 1 != slot):
@@ -102,6 +112,10 @@ class core_manager():
                 forward_delay + proc_delay)
             self.slots_duration[action][core][slot+1] -= (
                 self.slots_duration[action][core][slot] + proc_delay)
+            # Register the reservation's end time
+            self.reserv_end[action][core] = np.sort(np.append(
+                self.reserv_end[action][core],
+                self.slots_start[action][core][slot+1]))
             # Delete the slot if it is null (unless it is the end of the queue)
             if(self.slots_duration[action][core][slot+1] == 0 and
                len(self.slots_start[action][core]) - 1 != slot+1):
@@ -128,6 +142,13 @@ class core_manager():
                 # As time passes the core's queue advances
                 self.slots_start[node][core] -= app_time
                 self.slots_duration[node][core][-1] += app_time
+                self.reserv_end[node][core] -= app_time
+                # Check if any reservation has ended
+                ended = len(np.where(self.reserv_end[node][core] <= 0)[0])
+                if(ended > 0):
+                    self.queue_limit[node][core] += ended
+                    self.reserv_end[node][core] = np.delete(
+                        self.reserv_end[node][core], range(ended))
                 # Check if any slot has ended
                 for i in reversed(
                         range(np.argmax(self.slots_start[node][core] >= 0))):
@@ -155,15 +176,22 @@ class core_manager():
         # Reset all cores
         self.slots_duration = []
         self.slots_start = []
+        self.queue_limit = []
+        self.reserv_end = []
         for a in range(n_nodes):
             if(node_cores[a] > 0): # Ignore cloud nodes
                 duration = []
                 start = []
+                reservations = []
+                limit = [1000]*node_cores[a]
                 for i in range(node_cores[a]):
                     duration.append(
                         np.array([self.time_limit], dtype=np.float64))
                     start.append(np.array([0], dtype=np.float64))
+                    reservations.append(np.array([], dtype=np.float64))
                 self.slots_duration.append(duration)
                 self.slots_start.append(start)
+                self.queue_limit.append(limit)
+                self.reserv_end.append(reservations)
     
     
