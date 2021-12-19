@@ -13,7 +13,10 @@ from gym import spaces
 
 from .traffic_generator import traffic_generator
 from .core_manager import core_manager
-from .parameters import links, links_rate, links_delay, node_type, node_clock, node_cores, n_nodes, net_nodes, all_paths, node_comb, apps, app_max_delay, app_info
+from .parameters import (links, links_rate, links_delay, node_type, node_clock,
+                         node_cores, n_nodes, net_nodes, all_paths, node_comb,
+                         apps, app_cost, app_data_in, app_data_out,
+                         app_max_delay, app_rate, app_info)
 
 """
 Explanation on implemented discrete event simulator:
@@ -29,12 +32,6 @@ class offload_netEnv(gym.Env):
     def __init__(self):   
         # Node type list (used as information for metrics during testing)
         self.node_type = node_type
-        # App type list (used as information for metrics during testing)
-        self.apps = apps
-        # App description list (used as information for metrics during testing)
-        self.app_info = app_info
-        # Maximum tolerable delay of each application
-        self.apps_max_delay = app_max_delay
         
         # Type of next application
         self.app = 0
@@ -57,8 +54,6 @@ class offload_netEnv(gym.Env):
         # For monitoring purposes the observation will be kept at all times
         self.obs = 0
         
-        # List that holds individual core info for all nodes (except cloud)
-        #self.cores = []
         # Number of cores in the network (except cloud)
         self.n_cores = 0
         for a in range(n_nodes):
@@ -66,14 +61,18 @@ class offload_netEnv(gym.Env):
                 self.n_cores += node_cores[a]
         
         # Discrete event simulator traffic generation initialization
-        self.traffic_generator = traffic_generator()
+        self.traffic_generator = traffic_generator(n_nodes, net_nodes, apps,
+                                                   app_cost, app_data_in,
+                                                   app_data_out, app_max_delay,
+                                                   app_rate, app_info)
         
         # Discrete event simulator core manager initialization
         self.core_manager = core_manager()
         
         # The observation space has an element per core in the network
         self.observation_space = spaces.Box(low=0, high=1, shape=(
-                self.n_cores + len(self.apps), 1), dtype=np.float32)
+            self.n_cores + len(self.traffic_generator.apps), 1),
+            dtype=np.float32)
         
         self.action_space = spaces.Discrete(net_nodes + 1)
 
@@ -147,7 +146,7 @@ class offload_netEnv(gym.Env):
         self.obs = self.core_manager.update_and_calc_obs(self.app_time)
         
         # Add current petition's application type to observation
-        app_type = [0]*len(self.apps)
+        app_type = [0]*len(self.traffic_generator.apps)
         app_type[self.app-1] = 1
         self.obs = np.append(self.obs, np.array(app_type, dtype=np.float32))
 
@@ -176,7 +175,8 @@ class offload_netEnv(gym.Env):
         
         # Calculate observation
         self.obs = np.array(
-            [0]*(self.n_cores + len(self.apps)), dtype=np.float32)
+            [0]*(self.n_cores + len(self.traffic_generator.apps)),
+            dtype=np.float32)
         
         return self.obs
 
