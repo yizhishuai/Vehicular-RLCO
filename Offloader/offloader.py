@@ -163,7 +163,7 @@ def train_scenario(env):
     print('---TRAINING---')
     # Number of time steps to archive a stationary state in the network
     start_up = 1000
-    n_time_steps = 110000 # For 10^-3 precision -> ~10^5 sample points
+    n_time_steps = 210000 # For 10^-3 precision -> ~10^5 sample points
     # Number of last episodes to use for average reward calculation
     averaging_window = 10000
     x_axis = range(1, start_up+n_time_steps+1) # X axis for ploting results
@@ -292,7 +292,7 @@ def train_scenario(env):
     # Testing total delays of each petition per application
     test_app_delays = []
     print('\n---TESTING---')
-    n_time_steps = 10000
+    n_time_steps = 100000
     for batch in range(len(agents)):
         batch_success_rate = []
         batch_act_distribution = []

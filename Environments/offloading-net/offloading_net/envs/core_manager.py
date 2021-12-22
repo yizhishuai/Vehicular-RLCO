@@ -29,7 +29,7 @@ class core_manager():
         self.reserv_end = []
         
         # Limit for relative core load calculation (in ms)
-        self.time_limit = 100
+        self.time_limit = 14
     
     def reserve(self, action, forward_delay, proc_delay, return_delay):
         
@@ -150,13 +150,16 @@ class core_manager():
                     self.reserv_end[node][core] = np.delete(
                         self.reserv_end[node][core], range(ended))
                 # Check if any slot has ended
-                for i in reversed(
-                        range(np.argmax(self.slots_start[node][core] >= 0))):
+                if(np.amax(self.slots_start[node][core]) < 0):
+                    loop = range(len(self.slots_start[node][core]))
+                else:
+                    loop = range(np.argmin(self.slots_start[node][core] < 0))
+                for i in reversed(loop):
                     diff = (self.slots_duration[node][core][i] +
                             self.slots_start[node][core][i])
                     if(diff > 0): # If there is still time remaining
                         self.slots_start[node][core][i] = 0
-                        self.slots_duration[node][core][i] -= diff
+                        self.slots_duration[node][core][i] = diff
                     else: # If the slot is over (all prior slots too)
                         self.slots_start[node][core] = np.delete(
                             self.slots_start[node][core], range(i+1))
@@ -183,7 +186,7 @@ class core_manager():
                 duration = []
                 start = []
                 reservations = []
-                limit = [1000]*node_cores[a]
+                limit = [2]*node_cores[a]
                 for i in range(node_cores[a]):
                     duration.append(
                         np.array([self.time_limit], dtype=np.float64))

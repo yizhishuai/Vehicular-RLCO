@@ -55,7 +55,7 @@ class traffic_generator():
         
         # Calculate the arrival time of the petition
         next_arrival_time = self.gen_distribution(
-                1/self.app_rate[current_petition[1]-1], 'exponential')
+                self.app_rate[current_petition[1]-1], 'exponential')
         # Randomly select an application
         app_index = np.random.choice(self.apps) - 1
         
@@ -90,7 +90,7 @@ class traffic_generator():
         for i in range(self.net_nodes, self.net_nodes + loop_nodes):
             # Calculate the arrival time of the petition
             next_arrival_time = self.gen_distribution(
-                    1/self.app_rate[i], 'exponential')
+                    self.app_rate[i], 'exponential')
             # Randomly select an application
             app_index = np.random.choice(self.apps) - 1
             
