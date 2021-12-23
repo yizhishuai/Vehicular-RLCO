@@ -155,8 +155,8 @@ class core_manager():
                 else:
                     loop = range(np.argmin(self.slots_start[node][core] < 0))
                 for i in reversed(loop):
-                    diff = (self.slots_duration[node][core][i] +
-                            self.slots_start[node][core][i])
+                    diff = np.around(self.slots_duration[node][core][i] +
+                                     self.slots_start[node][core][i], 13)
                     if(diff > 0): # If there is still time remaining
                         self.slots_start[node][core][i] = 0
                         self.slots_duration[node][core][i] = diff

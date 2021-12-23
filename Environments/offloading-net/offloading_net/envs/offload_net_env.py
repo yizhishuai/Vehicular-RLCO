@@ -48,6 +48,12 @@ class offload_netEnv(gym.Env):
         # Maximum tolerable delay for the next application (ms)
         self.app_max_delay = 0
         
+        # Reference information for defined applications (maximums)
+        self.max_cost = max(app_cost)
+        self.max_data_in = max(app_data_in)
+        self.max_data_out = max(app_data_out)
+        self.max_delay = max(app_max_delay)
+        
         # Total delay of current application
         self.total_delay = 0
         
@@ -71,8 +77,7 @@ class offload_netEnv(gym.Env):
         
         # The observation space has an element per core in the network
         self.observation_space = spaces.Box(low=0, high=1, shape=(
-            self.n_cores + len(self.traffic_generator.apps), 1),
-            dtype=np.float32)
+            self.n_cores + 4, 1), dtype=np.float32)
         
         self.action_space = spaces.Discrete(net_nodes + 1)
 
@@ -112,6 +117,11 @@ class offload_netEnv(gym.Env):
         # Calculate the processing delay at the node
         proc_delay = (self.app_data_in*self.app_cost/node_clock[action])
         
+        # Limit the precision of the numbers to prevent overflow
+        forward_delay = np.around(forward_delay, 13)
+        return_delay = np.around(return_delay, 13)
+        proc_delay = np.around(proc_delay, 13)
+        
         # Choose the next as soon to be available core from the selected
         # processing node and reserve its core for the required time
         # If the selected processing node is the cloud no reservation is done
@@ -135,7 +145,7 @@ class offload_netEnv(gym.Env):
         # Assign variables from petition
         self.app = next_petition[0]
         self.app_origin = next_petition[1]
-        self.app_time = next_petition[2]
+        self.app_time = np.around(next_petition[2], 13) # Limit precision
         self.app_cost = next_petition[3]
         self.app_data_in = next_petition[4]
         self.app_data_out = next_petition[5]
@@ -146,8 +156,11 @@ class offload_netEnv(gym.Env):
         self.obs = self.core_manager.update_and_calc_obs(self.app_time)
         
         # Add current petition's application type to observation
-        app_type = [0]*len(self.traffic_generator.apps)
-        app_type[self.app-1] = 1
+        app_type = []
+        app_type.append(self.app_cost/self.max_cost)
+        app_type.append(self.app_data_in/self.max_data_in)
+        app_type.append(self.app_data_out/self.max_data_out)
+        app_type.append(self.app_max_delay/self.max_delay)
         self.obs = np.append(self.obs, np.array(app_type, dtype=np.float32))
 
         done = False # This environment is continuous and is never done
@@ -174,9 +187,7 @@ class offload_netEnv(gym.Env):
         self.app_max_delay = next_petition[6]
         
         # Calculate observation
-        self.obs = np.array(
-            [0]*(self.n_cores + len(self.traffic_generator.apps)),
-            dtype=np.float32)
+        self.obs = np.array([0]*(self.n_cores + 4), dtype=np.float32)
         
         return self.obs
 
