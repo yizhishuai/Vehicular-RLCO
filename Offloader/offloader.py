@@ -7,66 +7,14 @@ Created on Sat Nov 13 16:34:35 2021
 
 import chainerrl
 import gym
-import matplotlib.pyplot as plt
 import time
 import numpy as np
 
 from agent_creator import make_training_agents
+from graph_creator import (makeFigurePlot, makeFigureHistSingle,
+                           makeFigureHistSubplot)
 
 optimal_reward = 0 # Optimal reward of offloader
-
-# Funtion that creates, plots and labels a figure with given parameters
-def makeFigure(x_axis, y_axis, optimal=None, labels=[], legend=[], log=False):
-    
-    # Insert optimal value to y_axis so it is show on the graph (as first
-    # element so it's always the same colour)
-    if(optimal != None):
-        line_styles = (['-']*len(y_axis))
-        line_styles.insert(0, '--')
-        y_axis.insert(0, [optimal]*len(x_axis))
-        if(legend != []):
-            legend.insert(0, 'Optimal cost')
-    else:
-        line_styles = (['-']*len(y_axis))
-    
-    # Create and plot figure
-    plt.figure(figsize=[10,5])
-    for a in range(len(y_axis)):
-        plt.plot(x_axis, y_axis[a], line_styles[a])
-    
-    if(log):
-        plt.yscale('log')
-    
-    # Label figure
-    if labels:
-        plt.xlabel(labels[0])#, fontsize=22)
-        plt.ylabel(labels[1])#, fontsize=22)
-        plt.title(labels[2])#, fontsize=22)
-    if legend:
-        plt.legend(legend)#, fontsize=16)
-
-# Funtion that creates, fills and labels a histogram with given parameters
-def makeFigureHist(y_axis, bins=10, labels=[], legend=[], thresh=None):
-    
-    # Create and plot figure
-    plt.figure(figsize=[10,5])
-    plt.hist(y_axis, bins=bins, histtype='step')
-    
-    # Add threshhold line
-    if(thresh):
-        plt.axvline(thresh, color='k', linestyle='--')
-        legend.insert(0, 'Max tolerable delay')
-    
-    # Label figure
-    if labels:
-        plt.xlabel(labels[0])#, fontsize=22)
-        plt.ylabel(labels[1])#, fontsize=22)
-        plt.title(labels[2])#, fontsize=22)
-    if legend:
-        plt.legend(legend)#, fontsize=16)
-
-# Close all figures (in case some remain from a previous execution)
-plt.close('all')
 
 ### - Computation offloading agents with ChainerRL - ###
 
@@ -163,7 +111,7 @@ def train_scenario(env):
     print('---TRAINING---')
     # Number of time steps to archive a stationary state in the network
     start_up = 1000
-    n_time_steps = 210000 # For 10^-3 precision -> ~10^5 sample points
+    n_time_steps = 110000 # For 10^-3 precision -> ~10^5 sample points
     # Number of last episodes to use for average reward calculation
     averaging_window = 10000
     x_axis = range(1, start_up+n_time_steps+1) # X axis for ploting results
@@ -260,7 +208,8 @@ def train_scenario(env):
             # Plot results of batch (average rewards)
             labels = ['Time step', 'Average reward',
                       'Evolution of rewards (' + agents[batch][0][1] + ')']
-            makeFigure(x_axis, average_reward_values, optimal_reward, labels)
+            makeFigurePlot(
+                x_axis, average_reward_values, optimal_reward, labels)
     
     if(__name__ == "__main__"):
         # Plot results of best performing agents (average rewards)
@@ -269,7 +218,8 @@ def train_scenario(env):
         legend = []
         for a in range(len(top_agents_average)):
             legend.append(agents[a][0][1])
-        makeFigure(x_axis, top_agents_average, optimal_reward, labels, legend)
+        makeFigurePlot(
+            x_axis, top_agents_average, optimal_reward, labels, legend)
     
     # Average times
     print("\n--Average agent processing times:")
@@ -439,7 +389,7 @@ def train_scenario(env):
                 y_axis.append(test_app_delays[batch][i])
             bins = 20
             max_delay = env.traffic_generator.app_max_delay[i]
-            makeFigureHist(y_axis, bins, labels, legend, max_delay)
+            makeFigureHistSubplot(y_axis, bins, labels, legend, max_delay)
     
     """
     return {'train_block_probabilities': average_block_prob,
