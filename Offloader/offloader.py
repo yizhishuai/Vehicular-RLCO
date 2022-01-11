@@ -20,8 +20,8 @@ optimal_reward = 0 # Optimal reward of offloader
 
 if(__name__ == '__main__'):
     ## Environment (using gym)
-    # Checking if the environment is already registered is necesary for subsecuent 
-    # executions
+    # Checking if the environment is already registered is necesary for
+    # subsecuent executions
     env_dict = gym.envs.registration.registry.env_specs.copy()
     for env in env_dict:
         if 'offload' in env:

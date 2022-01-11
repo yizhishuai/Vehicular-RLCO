@@ -52,12 +52,11 @@ class traffic_generator():
             self.petition_Q[i][2] -= current_petition[2]
         
         ## Generate next petition from node that is about to be processed
+        app_index = current_petition[0] - 1
         
         # Calculate the arrival time of the petition
         next_arrival_time = self.gen_distribution(
-                self.app_rate[current_petition[1]-1], 'exponential')
-        # Randomly select an application
-        app_index = np.random.choice(self.apps) - 1
+                self.app_rate[app_index], 'exponential')
         
         next_petition = [app_index + 1, current_petition[1], next_arrival_time,
                          self.app_cost[app_index], self.app_data_in[app_index],
@@ -80,48 +79,26 @@ class traffic_generator():
         
         self.petition_Q.clear() # Clear the queue for initialization
         
-        # Count amount of nodes that will generate traffic
-        loop_nodes = max(2, self.n_nodes - self.net_nodes)
+        # TODO
         # NOTE: The way gen_traffic() works it requieres at least 2 petitions
         # in the queue
         
-        # Generate one petition from each node
-        initial_petitions = []
-        for i in range(self.net_nodes, self.net_nodes + loop_nodes):
-            # Calculate the arrival time of the petition
-            next_arrival_time = self.gen_distribution(
-                    self.app_rate[i], 'exponential')
-            # Randomly select an application
-            app_index = np.random.choice(self.apps) - 1
-            
-            # Assign values to the temporary queue (not sorted by arrival times)
-            initial_petitions.append(
-                [app_index + 1, i + 1, next_arrival_time, self.app_cost[app_index],
-                 self.app_data_in[app_index], self.app_data_out[app_index],
-                 self.app_max_delay[app_index]])
-        
-        # In case there was only one node but the minimum of 2 petitions were
-        # generated, change the origin of the second one
-        if(self.n_nodes - self.net_nodes < 2):
-            initial_petitions[1][1] = initial_petitions[0][1]
+        # Generate one petition for each application of each vehicle
+        for vehicle in range(self.net_nodes, self.n_nodes):
+            for app_index in range(len(self.apps)):
+                # Calculate the arrival time of the petition
+                next_arrival_time = self.gen_distribution(
+                        self.app_rate[app_index], 'exponential')
+                
+                # Assign values to the queue (not sorted by arrival times)
+                self.petition_Q.append(
+                    [app_index + 1, vehicle + 1, next_arrival_time,
+                     self.app_cost[app_index], self.app_data_in[app_index],
+                     self.app_data_out[app_index],
+                     self.app_max_delay[app_index]])
         
         # Sort petitions by arrival time
-        for index, f in enumerate(initial_petitions):
-            if(len(self.petition_Q) == 0): # If the queue is empty
-                self.petition_Q.append(f)
-            else: # If the queue is not empty
-                for i in range(len(self.petition_Q)):
-                    if(f[2] < self.petition_Q[i][2]):
-                        self.petition_Q.insert(i, f)
-                        break
-                    if(i == len(self.petition_Q) - 1):
-                        self.petition_Q.append(f)
-        
-        # All arrival times are trimmed so that the first arriving petition has
-        # a next arrival time of 0
-        first_arrival_time = self.petition_Q[0][2]
-        for i in range(len(self.petition_Q)):
-            self.petition_Q[i][2] -= first_arrival_time
+        self.petition_Q.sort(key=lambda x:x[2])
 
     def gen_distribution(self, beta=1, dist='static'):
         if(dist in 'static'):
