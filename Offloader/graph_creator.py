@@ -66,7 +66,7 @@ def makeFigureHistSingle(y_axis, bins=10, labels=[], legend=[], thresh=None):
 def makeFigureHistSubplot(y_axis, bins=10, labels=[], legend=[], thresh=None):
     
     # Create and plot figure
-    plt.figure(figsize=[10,6])
+    plt.figure(figsize=[10,8])
     
     for hist in range(len(y_axis)):
         plt.subplot(len(y_axis), 1, hist+1)

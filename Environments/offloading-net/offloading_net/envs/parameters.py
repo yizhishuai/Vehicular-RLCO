@@ -7,9 +7,7 @@ Created on Sat Nov 13 16:44:33 2021
 
 import pandas as pd
 import networkx as netx
-from itertools import combinations
-
-from .k_shortest_paths import k_shortest_paths
+from itertools import product
 
 path_to_env = '../Environments/offloading-net/offloading_net/envs/'
 
@@ -32,7 +30,7 @@ links_rate = data['bitrate'].values.tolist()
 links_delay = data['delay'].values.tolist()
 
 # Get parameters for nodes in the network (loaded from .csv)
-data = pd.read_csv(path_to_env + 'network_branchless_nodes.csv') # Falta la definición dinámica del nombre
+data = pd.read_csv(path_to_env + 'network_branchless_nodes.csv') # TODO Falta la definición dinámica del nombre
 node_type = data['type'].values.tolist()
 node_clock = data['clock'].values.tolist()
 node_cores = data['cores'].values.tolist()
@@ -57,13 +55,17 @@ net_nodes = sum(map(lambda x : x<4, node_type))
 net = netx.Graph()
 net.add_edges_from(links)
 
+# Find vehicle nodes and non-vehicle nodes
+sources = [node+1 for node, n_type in enumerate(node_type) if n_type == 4]
+targets = [node+1 for node, n_type in enumerate(node_type) if n_type != 4]
+
+# Calculate all necessary combinations of nodes (from each vehicle to other)
+node_comb = product(sources, targets)
+node_comb = list(map(lambda x : list(x), node_comb))
+for i in node_comb: i.sort()
+
 # Precalculation of routes
 all_paths = []
-current_paths = []
-node_comb = list(combinations(range(1, n_nodes+1), 2))
-for i in range(len(node_comb)):
-    for path in k_shortest_paths(net, node_comb[i][0], node_comb[i][1], k=1):
-        current_paths.append(path)
-    all_paths.append(current_paths)
-    current_paths = []
+for pair in node_comb:
+    all_paths.append(netx.shortest_path(net, pair[0], pair[1]))
 

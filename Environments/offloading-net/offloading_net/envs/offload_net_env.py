@@ -95,7 +95,7 @@ class offload_netEnv(gym.Env):
         else:
             current_nodes = [self.app_origin, action + 1]
             current_nodes.sort()
-            path = all_paths[node_comb.index(tuple(current_nodes))]
+            path = all_paths[node_comb.index(current_nodes)]
         
         # For each action one node for processing an application is chosen,
         # reserving one of its cores (might queue)
@@ -104,8 +104,8 @@ class offload_netEnv(gym.Env):
         forward_delay = 0
         return_delay = 0
         if path:
-            for a in range(len(path[0])-1):
-                link = [path[0][a], path[0][a+1]]
+            for a in range(len(path)-1):
+                link = [path[a], path[a+1]]
                 link.sort()
                 link_index = links.index(link)
                 link_rate = links_rate[link_index] # in Mbit/s
