@@ -37,14 +37,14 @@ class traffic_generator():
         
         """
         Every time this method is called it returns the next arriving
-        application petition and generates a new one for the node that was the
-        origin for that petition. This newly generated petition is inserted
+        application petition and generates a new one for the source that was
+        the origin for that petition. This newly generated petition is inserted
         into the already generated petitions queue into the proper position
         depending on its arrival time
         """
         
-        # Send to the controller the next generated petition (next in arrival
-        # time)
+        # The next generated petition (next in arrival time) to send to the
+        # controller
         current_petition = self.petition_Q.pop(0)
         
         # Update arrival times for the rest of the petitions in the queue
@@ -65,12 +65,12 @@ class traffic_generator():
         
         # Insert new petition in the corresponding queue position (according
         # to arrival time)
-        for i in range(len(self.petition_Q)):
-            if(next_petition[2] < self.petition_Q[i][2]):
-                self.petition_Q.insert(i, next_petition)
-                break
-            if(i == len(self.petition_Q) - 1):
-                self.petition_Q.append(next_petition)
+        i = next((x for x, f in enumerate(self.petition_Q)
+                  if f[2] > next_arrival_time), -1)
+        if(self.petition_Q and i >= 0):
+            self.petition_Q.insert(i, next_petition)
+        else:
+            self.petition_Q.append(next_petition)
         
         # Return current petition to the controller
         return current_petition
@@ -78,10 +78,6 @@ class traffic_generator():
     def gen_initial_traffic(self):
         
         self.petition_Q.clear() # Clear the queue for initialization
-        
-        # TODO
-        # NOTE: The way gen_traffic() works it requieres at least 2 petitions
-        # in the queue
         
         # Generate one petition for each application of each vehicle
         for vehicle in range(self.net_nodes, self.n_nodes):
