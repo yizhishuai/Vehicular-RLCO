@@ -15,8 +15,8 @@ class traffic_generator():
                  app_data_out, app_max_delay, app_rate, app_info):
         # The petition queue stores petitions that have been precalculated
         # NOTE: This queue does not represent pending petitions for the agent,
-        #       it simply stores all petitions that have been generate randomly
-        #       for the discrete event simulator
+        #       it simply stores all petitions that have been generated
+        #       randomly for the discrete event simulator
         self.petition_Q = []
         
         # Number of nodes in the network
@@ -102,6 +102,5 @@ class traffic_generator():
         elif(dist in 'exponential'):
             return np.random.exponential(beta)
         else:
-            print('Unexpected type of distribution')
-            raise KeyboardInterrupt
+            raise KeyboardInterrupt('Unexpected type of distribution')
 

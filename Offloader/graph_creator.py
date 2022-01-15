@@ -66,10 +66,11 @@ def makeFigureHistSingle(y_axis, bins=10, labels=[], legend=[], thresh=None):
 def makeFigureHistSubplot(y_axis, bins=10, labels=[], legend=[], thresh=None):
     
     # Create and plot figure
-    plt.figure(figsize=[10,8])
+    plt.figure(figsize=[10,5])
     
     for hist in range(len(y_axis)):
         plt.subplot(len(y_axis), 1, hist+1)
+        print(len(y_axis[hist]))
         plt.hist(y_axis[hist])
         # Add threshhold line
         if(thresh):
@@ -84,4 +85,5 @@ def makeFigureHistSubplot(y_axis, bins=10, labels=[], legend=[], thresh=None):
     if labels:
         plt.suptitle(labels[2])#, fontsize=22)
     
+    plt.tight_layout()
 

@@ -30,15 +30,15 @@ def create_agent(
     
     # Error handling
     if(type(gamma) != float and type(gamma) != int):
-        print('Error while creating agent: Gamma type invalid')
-        raise KeyboardInterrupt
+        raise KeyboardInterrupt(
+            'Error while creating agent: Gamma type invalid')
     if(type(exp_type) != str):
-        print('Error while creating agent: Exploration type invalid')
-        raise KeyboardInterrupt
+        raise KeyboardInterrupt(
+            'Error while creating agent: Exploration type invalid')
     if(type(epsilon) != float and type(epsilon) != int
        and type(epsilon) != list):
-        print('Error while creating agent: Epsilon type invalid')
-        raise KeyboardInterrupt
+        raise KeyboardInterrupt(
+            'Error while creating agent: Epsilon type invalid')
     
     if(alg in 'DDQN'):
         # Q function instanciation
@@ -50,21 +50,26 @@ def create_agent(
         
         # Exploration & agent info
         if(exp_type in 'constant'):
-            agent_info = 'DDQN: ' + 'Constant ' + chr(949) + '=' + str(epsilon) + ' (' + chr(947) + '=' + str(gamma) + ')'
+            agent_info = ('DDQN: ' + 'Constant ' + chr(949) + '=' +
+                          str(epsilon) + ' (' + chr(947) + '=' + str(gamma) +
+                          ')')
             explorer = chainerrl.explorers.ConstantEpsilonGreedy(
                     epsilon=epsilon, random_action_func=exploration_func)
         elif(exp_type in 'linear decay'):
             if(type(epsilon) != list):
-                print('Error while creating agent: Linear decay exploration does'
-                      'not work with a constant epsilon')
-                raise KeyboardInterrupt
-            agent_info = 'DDQN: ' + 'Linear decay ' + chr(949) + '=' + str(epsilon[0]) + '->' + str(epsilon[1]) + ' in ' + str(epsilon[2]) + ' time steps' + ' (' + chr(947) + '=' + str(gamma) + ')'
+                raise KeyboardInterrupt(
+                    'Error while creating agent: Linear decay exploration does'
+                    'not work with a constant epsilon')
+            agent_info = ('DDQN: ' + 'Linear decay ' + chr(949) + '=' +
+                          str(epsilon[0]) + '->' + str(epsilon[1]) + ' in ' +
+                          str(epsilon[2]) + ' time steps' + ' (' + chr(947) +
+                          '=' + str(gamma) + ')')
             explorer = chainerrl.explorers.LinearDecayEpsilonGreedy(
             start_epsilon=epsilon[0], end_epsilon=epsilon[1],
             decay_steps=epsilon[2], random_action_func=exploration_func)
         else: # If type doesn't match with any known one raise error
-            print('Error while creating agent: Unknown exploration type')
-            raise KeyboardInterrupt
+            raise KeyboardInterrupt(
+                'Error while creating agent: Unknown exploration type')
         
         # Experience replay
         replay_buffer = chainerrl.replay_buffer.ReplayBuffer(capacity=1000000)
@@ -73,12 +78,6 @@ def create_agent(
         agent = chainerrl.agents.DoubleDQN(
                 q_func, opt, replay_buffer, gamma, explorer,
                 replay_start_size=100000, target_update_interval=50000)
-        
-        """
-        ,
-                replay_start_size=500, update_interval=1,
-                target_update_interval=100
-        """
         
         return agent, agent_info, q_func, opt, explorer, replay_buffer
     elif(alg in 'SARSA'):
@@ -91,21 +90,26 @@ def create_agent(
         
         # Exploration & agent info
         if(exp_type in 'constant'):
-            agent_info = 'SARSA: ' + 'Constant ' + chr(949) + '=' + str(epsilon) + ' (' + chr(947) + '=' + str(gamma) + ')'
+            agent_info = ('SARSA: ' + 'Constant ' + chr(949) + '=' +
+                          str(epsilon) + ' (' + chr(947) + '=' + str(gamma) +
+                          ')')
             explorer = chainerrl.explorers.ConstantEpsilonGreedy(
                     epsilon=epsilon, random_action_func=exploration_func)
         elif(exp_type in 'linear decay'):
             if(type(epsilon) != list):
-                print('Error while creating agent: Linear decay exploration does'
-                      'not work with a constant epsilon')
-                raise KeyboardInterrupt
-            agent_info = 'SARSA: ' + 'Linear decay ' + chr(949) + '=' + str(epsilon[0]) + '->' + str(epsilon[1]) + ' in ' + str(epsilon[2]) + ' time steps' + ' (' + chr(947) + '=' + str(gamma) + ')'
+                raise KeyboardInterrupt(
+                    'Error while creating agent: Linear decay exploration does'
+                    'not work with a constant epsilon')
+            agent_info = ('SARSA: ' + 'Linear decay ' + chr(949) + '=' +
+                          str(epsilon[0]) + '->' + str(epsilon[1]) + ' in ' +
+                          str(epsilon[2]) + ' time steps' + ' (' + chr(947) +
+                          '=' + str(gamma) + ')')
             explorer = chainerrl.explorers.LinearDecayEpsilonGreedy(
             start_epsilon=epsilon[0], end_epsilon=epsilon[1],
             decay_steps=epsilon[2], random_action_func=exploration_func)
         else: # If type doesn't match with any known one raise error
-            print('Error while creating agent: Unknown exploration type')
-            raise KeyboardInterrupt
+            raise KeyboardInterrupt(
+                'Error while creating agent: Unknown exploration type')
         
         # Experience replay
         replay_buffer = chainerrl.replay_buffer.ReplayBuffer(capacity=10 ** 6)
@@ -126,21 +130,26 @@ def create_agent(
         
         # Exploration & agent info
         if(exp_type in 'constant'):
-            agent_info = 'PAL: ' + 'Constant ' + chr(949) + '=' + str(epsilon) + ' (' + chr(947) + '=' + str(gamma) + ')'
+            agent_info = ('PAL: ' + 'Constant ' + chr(949) + '=' +
+                          str(epsilon) + ' (' + chr(947) + '=' + str(gamma) +
+                          ')')
             explorer = chainerrl.explorers.ConstantEpsilonGreedy(
                     epsilon=epsilon, random_action_func=exploration_func)
         elif(exp_type in 'linear decay'):
             if(type(epsilon) != list):
-                print('Error while creating agent: Linear decay exploration does'
-                      'not work with a constant epsilon')
-                raise KeyboardInterrupt
-            agent_info = 'PAL: ' + 'Linear decay ' + chr(949) + '=' + str(epsilon[0]) + '->' + str(epsilon[1]) + ' in ' + str(epsilon[2]) + ' time steps' + ' (' + chr(947) + '=' + str(gamma) + ')'
+                raise KeyboardInterrupt(
+                    'Error while creating agent: Linear decay exploration does'
+                    'not work with a constant epsilon')
+            agent_info = ('PAL: ' + 'Linear decay ' + chr(949) + '=' +
+                          str(epsilon[0]) + '->' + str(epsilon[1]) + ' in ' +
+                          str(epsilon[2]) + ' time steps' + ' (' + chr(947) +
+                          '=' + str(gamma) + ')')
             explorer = chainerrl.explorers.LinearDecayEpsilonGreedy(
             start_epsilon=epsilon[0], end_epsilon=epsilon[1],
             decay_steps=epsilon[2], random_action_func=exploration_func)
         else: # If type doesn't match with any known one raise error
-            print('Error while creating agent: Unknown exploration type')
-            raise KeyboardInterrupt
+            raise KeyboardInterrupt(
+                'Error while creating agent: Unknown exploration type')
         
         # Experience replay
         replay_buffer = chainerrl.replay_buffer.ReplayBuffer(capacity=10 ** 6)
@@ -175,7 +184,6 @@ def create_agent(
         agent_info = 'TRPO' + ' (' + chr(947) + '=' + str(gamma) + ')'
         
         return agent, agent_info, policy, opt
-        
 
 # Funtion that instances one or more agents with certain parameters
 def create_agents(
@@ -185,8 +193,8 @@ def create_agents(
     agents = []
     for i in range(repetitions):
         # Instance agent with its objects and append to list
-        agents.append(create_agent(gamma, obs_size, n_actions, exploration_func,
-                                   alg, exp_type, epsilon))
+        agents.append(create_agent(gamma, obs_size, n_actions,
+                                   exploration_func, alg, exp_type, epsilon))
     
     # Return list of turples which contain agents with equal parameters
     return agents
@@ -199,8 +207,8 @@ def make_training_agents(
     if(type(alg) != list and type(alg) == str):
         alg = [alg]
     elif(type(alg) != list and type(alg) != str):
-        print('Error while creating agents: Incorrect parameter types')
-        raise KeyboardInterrupt
+        raise KeyboardInterrupt(
+            'Error while creating agents: Incorrect parameter types')
     
     agents = [] # List that contains lists of turples
     for a in range(len(alg)):
@@ -216,16 +224,16 @@ def make_training_agents(
         
         # Error handling
         if(exp_types == None or epsilons == None or gammas == None):
-            print('Error while creating agents: Missing required arguments')
-            raise KeyboardInterrupt
+            raise KeyboardInterrupt(
+                'Error while creating agents: Missing required arguments')
         if((type(exp_types) != str and type(exp_types) != list) or
            (type(epsilons) != float and type(epsilons) != list and
             type(epsilons) != int) or
            (type(repetitions) != int and type(repetitions) != list) or
            (type(gammas) != float and type(gammas) != list and
             type(gammas) != int)):
-               print('Error while creating agents: Incorrect parameter types')
-               raise KeyboardInterrupt
+               raise KeyboardInterrupt(
+                   'Error while creating agents: Incorrect parameter types')
         
         # Define some parameters from the environment
         obs_size = env.observation_space.shape[0]
@@ -238,38 +246,40 @@ def make_training_agents(
             # One type of agent
             # Error handling
             if(type(repetitions) == list):
-                print('Error while creating agents: Repetitions parameter',
-                      'was expected to be an integer')
-                raise KeyboardInterrupt
+                raise KeyboardInterrupt(
+                    'Error while creating agents: Repetitions parameter was '
+                    'expected to be an integer')
             # Agent instanciation
-            agents.append(create_agents(exp_types, epsilons, repetitions,
-                                        gammas, obs_size, n_actions,
-                                        exploration_func, alg[a]))
+            agents.append(create_agents(
+                exp_types, epsilons, repetitions, gammas, obs_size, n_actions,
+                exploration_func, alg[a]))
+        
         elif(type(exp_types) == list):
             # Multiple types of agent
             agent_num = len(exp_types)
             
             # Error handling
             if(type(epsilons) == list and len(epsilons) != agent_num):
-                print('Error while creating agents: Number of exploration',
-                      'types doesn´t match number of epsilons')
-                print('TIP: You may pass just one value of epsilon')
-                raise KeyboardInterrupt
+                raise KeyboardInterrupt(
+                    'Error while creating agents: Number of exploration types '
+                    'doesn´t match number of epsilons\n'
+                    'TIP: You may pass just one value of epsilon')
             if(type(repetitions) == list and len(repetitions) != agent_num):
-                print('Error while creating agents: Number of exploration',
-                      'types doesn´t match number of repetitions')
-                print('TIP: You may pass just one value of repetitions')
-                raise KeyboardInterrupt
+                raise KeyboardInterrupt(
+                    'Error while creating agents: Number of exploration types '
+                    'doesn´t match number of repetitions\n'
+                    'TIP: You may pass just one value of repetitions')
             if(type(gammas) == list and len(gammas) != agent_num):
-                print('Error while creating agents: Number of exploration',
-                      'types doesn´t match number of gammas')
-                print('TIP: You may pass just one value of gamma')
-                raise KeyboardInterrupt
+                raise KeyboardInterrupt(
+                    'Error while creating agents: Number of exploration types '
+                    'doesn´t match number of gammas\n'
+                    'TIP: You may pass just one value of gamma')
             
             # Agent instanciation
             
-            # Create a list of just one element in case there is only one, so code
-            # in the loop can be simplified (epsilons[i], repetitions[i], gammas[i])
+            # Create a list of just one element in case there is only one, so
+            # code in the loop can be simplified (epsilons[i], repetitions[i],
+            # gammas[i])
             if(type(epsilons) == float):
                 temp = []
                 for i in range(agent_num):
@@ -292,35 +302,36 @@ def make_training_agents(
                 instance of an agent. The list contains agents with equal
                 parameters.
                 """
-                agents.append(create_agents(exp_types[i], epsilons[i],
-                                            repetitions[i], gammas[i], obs_size,
-                                            n_actions, exploration_func, alg[a]))
-            
+                agents.append(create_agents(
+                    exp_types[i], epsilons[i], repetitions[i], gammas[i],
+                    obs_size, n_actions, exploration_func, alg[a]))
+        
         elif(type(epsilons) == list):
             # Multiple types of agent
             agent_num = len(epsilons)
             
             # Error handling
             if(type(exp_types) == list and len(exp_types) != agent_num):
-                print('Error while creating agents: Number of exploration',
-                      'types doesn´t match number of epsilons')
-                print('TIP: You may pass just one value of epsilon')
-                raise KeyboardInterrupt
+                raise KeyboardInterrupt(
+                    'Error while creating agents: Number of exploration types '
+                    'doesn´t match number of epsilons\n'
+                    'TIP: You may pass just one value of epsilon')
             if(type(repetitions) == list and len(repetitions) != agent_num):
-                print('Error while creating agents: Number of exploration',
-                      'types doesn´t match number of repetitions')
-                print('TIP: You may pass just one value of repetitions')
-                raise KeyboardInterrupt
+                raise KeyboardInterrupt(
+                    'Error while creating agents: Number of exploration types '
+                    'doesn´t match number of repetitions\n'
+                    'TIP: You may pass just one value of repetitions')
             if(type(gammas) == list and len(gammas) != agent_num):
-                print('Error while creating agents: Number of exploration',
-                      'types doesn´t match number of gammas')
-                print('TIP: You may pass just one value of gamma')
-                raise KeyboardInterrupt
+                raise KeyboardInterrupt(
+                    'Error while creating agents: Number of exploration types '
+                    'doesn´t match number of gammas\n'
+                    'TIP: You may pass just one value of gamma')
             
             # Agent instanciation
             
-            # Create a list of just one element in case there is only one, so code
-            # in the loop can be simplified (exp_types[i], repetitions[i], gammas[i])
+            # Create a list of just one element in case there is only one, so
+            # code in the loop can be simplified (exp_types[i], repetitions[i],
+            # gammas[i])
             if(type(exp_types) == str):
                 temp = []
                 for i in range(agent_num):
@@ -343,9 +354,9 @@ def make_training_agents(
                 instance of an agent. The list contains agents with equal
                 parameters.
                 """
-                agents.append(create_agents(exp_types[i], epsilons[i],
-                                            repetitions[i], gammas[i], obs_size,
-                                            n_actions, exploration_func, alg[a]))
+                agents.append(create_agents(
+                    exp_types[i], epsilons[i], repetitions[i], gammas[i],
+                    obs_size, n_actions, exploration_func, alg[a]))
         
         elif(type(gammas) == list):
             # Multiple types of agent
@@ -353,25 +364,26 @@ def make_training_agents(
             
             # Error handling
             if(type(epsilons) == list and len(epsilons) != agent_num):
-                print('Error while creating agents: Number of exploration',
-                      'types doesn´t match number of epsilons')
-                print('TIP: You may pass just one value of epsilon')
-                raise KeyboardInterrupt
+                raise KeyboardInterrupt(
+                    'Error while creating agents: Number of exploration types '
+                    'doesn´t match number of epsilons\n'
+                    'TIP: You may pass just one value of epsilon')
             if(type(exp_types) == list and len(exp_types) != agent_num):
-                print('Error while creating agents: Number of exploration',
-                      'types doesn´t match number of epsilons')
-                print('TIP: You may pass just one value of epsilon')
-                raise KeyboardInterrupt
+                raise KeyboardInterrupt(
+                    'Error while creating agents: Number of exploration types '
+                    'doesn´t match number of epsilons\n'
+                    'TIP: You may pass just one value of epsilon')
             if(type(repetitions) == list and len(repetitions) != agent_num):
-                print('Error while creating agents: Number of exploration',
-                      'types doesn´t match number of repetitions')
-                print('TIP: You may pass just one value of repetitions')
-                raise KeyboardInterrupt
+                raise KeyboardInterrupt(
+                    'Error while creating agents: Number of exploration types '
+                    'doesn´t match number of repetitions\n'
+                    'TIP: You may pass just one value of repetitions')
             
             # Agent instanciation
             
-            # Create a list of just one element in case there is only one, so code
-            # in the loop can be simplified (epsilons[i], exp_types[i], repetitions[i])
+            # Create a list of just one element in case there is only one, so
+            # code in the loop can be simplified (epsilons[i], exp_types[i],
+            # repetitions[i])
             if(type(epsilons) == float):
                 temp = []
                 for i in range(agent_num):
@@ -394,13 +406,13 @@ def make_training_agents(
                 instance of an agent. The list contains agents with equal
                 parameters.
                 """
-                agents.append(create_agents(exp_types[i], epsilons[i],
-                                            repetitions[i], gammas[i], obs_size,
-                                            n_actions, exploration_func, alg[a]))
-            
+                agents.append(create_agents(
+                    exp_types[i], epsilons[i], repetitions[i], gammas[i],
+                    obs_size, n_actions, exploration_func, alg[a]))
+        
         else: # Error handling for other cases
-            print('Error: Unexpected parameter types or values')
-            raise KeyboardInterrupt
+            raise KeyboardInterrupt(
+                'Error: Unexpected parameter types or values')
         
         # Reassing unused parameters for next algorithm
         if(alg[a] in 'TRPO'):

@@ -21,19 +21,24 @@ try:
     topology = state_file.read() # Defined from main
     state_file.close()
 except:
-    topology = 'network_branchless.csv' # Default for single simulation testing
+    topology = 'network_branchless' # Default for single simulation testing
 
 # Links and bitrate/delay of each link (loaded from .csv)
-data = pd.read_csv(path_to_env + topology)
+data = pd.read_csv(path_to_env + topology + '.csv')
 links = data[['original', 'connected']].values.tolist()
 links_rate = data['bitrate'].values.tolist()
 links_delay = data['delay'].values.tolist()
 
 # Get parameters for nodes in the network (loaded from .csv)
-data = pd.read_csv(path_to_env + 'network_branchless_nodes.csv') # TODO Falta la definición dinámica del nombre
+data = pd.read_csv(path_to_env + topology + '_nodes.csv')
 node_type = data['type'].values.tolist()
 node_clock = data['clock'].values.tolist()
 node_cores = data['cores'].values.tolist()
+
+# Check that only one cloud node exists
+if(node_type.count(1) > 1):
+    raise KeyboardInterrupt(
+        "Error in network definition: Only one cloud node is allowed!")
 
 # Get definided applications (loaded from .csv)
 data = pd.read_csv(path_to_env + 'app_definition.csv')

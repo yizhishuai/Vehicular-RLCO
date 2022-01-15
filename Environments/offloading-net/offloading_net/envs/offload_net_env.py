@@ -20,16 +20,45 @@ from .parameters import (links, links_rate, links_delay, node_type, node_clock,
 
 """
 Explanation on implemented discrete event simulator:
-    TODO
+    
+    This environment simulates a network consisting of four types of nodes
+    (cloud, MEC, RSU and vehicle). The cloud node is special as there can only
+    be one and it has unlimited resources (no queue although its processing
+    speed is still modeled after real cores). Together with the cloud node, the
+    MEC and RSU nodes form a network interconnected with links. The vehicle
+    nodes connect to this network via a shared wireless link at the RSU.
+    Each vehicle node runs a set of defined applications with generate
+    petitions that will have to be processed at some node of the network. This
+    also means that unless the processing occurs at the same vehicle, the input
+    data from the applications has to be sent to the corresponding node and
+    once processed, the output data has to return.
+    The applications from one vehicle cannot be processed by other vehicles.
+    
+    At each time step, one petition is processed. At this time the action
+    by the interacting agent is used to calculate delays and reserve a time
+    slot at a core of the selected node. The time at which each petition
+    are randomly generated with an exponential distribution and a mean defined
+    for each application. These time are also used at each time step to update
+    the queues at all cores (time passes). Finally, an observation is returned
+    to the agent containing information on the current state of the cores of
+    the network and the parameters of the next petition's application.
 
 In this environment the petitions are generated in the traffic_generator class
-and passed to the environment.
+and passed to the environment. The module that manages the queues of the cores
+is the core_manager class.
+
+Approximations are used for modeling transmision delays and queues. The focus
+is on the processing (the cores).
 """
 
 class offload_netEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self):   
+    def __init__(self):
+        # Precision limit (in number of decimals) for numpy.float64 variables
+        # used to avoid overflow when operating with times in the simulator
+        self.precision_limit = 13 # Numpy.float64 has 15 decimals
+        
         # Node type list (used as information for metrics during testing)
         self.node_type = node_type
         
@@ -53,6 +82,7 @@ class offload_netEnv(gym.Env):
         self.max_data_in = max(app_data_in)
         self.max_data_out = max(app_data_out)
         self.max_delay = max(app_max_delay)
+        self.app_param_count = 4
         
         # Total delay of current application
         self.total_delay = 0
@@ -77,7 +107,7 @@ class offload_netEnv(gym.Env):
         
         # The observation space has an element per core in the network
         self.observation_space = spaces.Box(low=0, high=1, shape=(
-            self.n_cores + 4, 1), dtype=np.float32)
+            self.n_cores + self.app_param_count, 1), dtype=np.float32)
         
         self.action_space = spaces.Discrete(net_nodes + 1)
 
@@ -118,9 +148,9 @@ class offload_netEnv(gym.Env):
         proc_delay = (self.app_data_in*self.app_cost/node_clock[action])
         
         # Limit the precision of the numbers to prevent overflow
-        forward_delay = np.around(forward_delay, 13)
-        return_delay = np.around(return_delay, 13)
-        proc_delay = np.around(proc_delay, 13)
+        forward_delay = np.around(forward_delay, self.precision_limit)
+        return_delay = np.around(return_delay, self.precision_limit)
+        proc_delay = np.around(proc_delay, self.precision_limit)
         
         # Choose the next as soon to be available core from the selected
         # processing node and reserve its core for the required time
@@ -145,7 +175,7 @@ class offload_netEnv(gym.Env):
         # Assign variables from petition
         self.app = next_petition[0]
         self.app_origin = next_petition[1]
-        self.app_time = np.around(next_petition[2], 13) # Limit precision
+        self.app_time = np.around(next_petition[2], self.precision_limit)
         self.app_cost = next_petition[3]
         self.app_data_in = next_petition[4]
         self.app_data_out = next_petition[5]
@@ -153,7 +183,8 @@ class offload_netEnv(gym.Env):
         
         ## Observation calculation
         # Core information
-        self.obs = self.core_manager.update_and_calc_obs(self.app_time)
+        self.obs = self.core_manager.update_and_calc_obs(
+            self.app_time, self.precision_limit)
         
         # Add current petition's application type to observation
         app_type = []
@@ -187,7 +218,8 @@ class offload_netEnv(gym.Env):
         self.app_max_delay = next_petition[6]
         
         # Calculate observation
-        self.obs = np.array([0]*(self.n_cores + 4), dtype=np.float32)
+        self.obs = np.array(
+            [0]*(self.n_cores + self.app_param_count), dtype=np.float32)
         
         return self.obs
 

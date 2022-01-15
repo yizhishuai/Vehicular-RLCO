@@ -96,8 +96,8 @@ class core_manager():
                     self.slots_duration[action][core], slot)
             # Negative values for slot duration should not be possible
             elif(self.slots_duration[action][core][slot] < 0):
-                print("Trouble with precision at core queues!")
-                raise KeyboardInterrupt
+                raise KeyboardInterrupt(
+                    "Trouble with precision at core queues!")
         # If arrival of data is posterior to slot's start
         else:
             # Create new slot before the new reservation
@@ -125,12 +125,12 @@ class core_manager():
                     self.slots_duration[action][core], slot+1)
             # Negative values for slot duration should not be possible
             elif(self.slots_duration[action][core][slot+1] < 0):
-                print("Trouble with precision at core queues!")
-                raise KeyboardInterrupt
+                raise KeyboardInterrupt(
+                    "Trouble with precision at core queues!")
         
         return total_delay
     
-    def update_and_calc_obs(self, app_time):
+    def update_and_calc_obs(self, app_time, precision_limit):
         
         ## Observation calculation
         obs = np.array([], dtype=np.float32)
@@ -156,7 +156,8 @@ class core_manager():
                     loop = range(np.argmin(self.slots_start[node][core] < 0))
                 for i in reversed(loop):
                     diff = np.around(self.slots_duration[node][core][i] +
-                                     self.slots_start[node][core][i], 13)
+                                     self.slots_start[node][core][i],
+                                     precision_limit)
                     if(diff > 0): # If there is still time remaining
                         self.slots_start[node][core][i] = 0
                         self.slots_duration[node][core][i] = diff

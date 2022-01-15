@@ -38,7 +38,7 @@ def train_scenario(env):
     # Environment parameters requiered for training/testing
     n_actions = env.action_space.n
     n_apps = len(env.traffic_generator.apps)
-    n_nodes = len(env.node_type) # TODO (This variable name is ok??)
+    n_nodes = len(env.node_type)
     
     ## - To define the agent & training, will use ChainerRL - ##
     
@@ -100,13 +100,17 @@ def train_scenario(env):
     
     # Training
     """
-    The training environment consists of a network in which the agent has to
-    look for a path from an origin node to a destinition node. Each action will
-    result in a negative reward which depends on the cost of traversing the
-    link choosen by the agent.
-    In some states (nodes), the agent can choose an invalid action due to there
-    being more actions than outgoing links from the current node. These actions
-    yield a significant cost and will not change the state of the environment.
+    The training environment consists of a network with four types of nodes
+    (cloud, MEC, RSU and vehicles). They each have resources in the form of
+    cores with different processing speeds, and that have a limited queue size.
+    Each vehicle runs a set of application which generate petitions that will
+    have to be processed at some node.
+    The agent receives information on the reservation time of the queues (from
+    0% to 100%) and information on the parameters of the application that
+    currently needs to be processed (relative to the others).
+    The task is to select a node at which to process the application to ensure
+    that its output data is returned to the corresponding vehicle within a
+    maximum latency.
     """
     print('---TRAINING---')
     # Number of time steps to archive a stationary state in the network
@@ -242,7 +246,7 @@ def train_scenario(env):
     # Testing total delays of each petition per application
     test_app_delays = []
     print('\n---TESTING---')
-    n_time_steps = 100000
+    n_time_steps = 10000
     for batch in range(len(agents)):
         batch_success_rate = []
         batch_act_distribution = []
@@ -325,20 +329,6 @@ def train_scenario(env):
             print('   -Total application delay average:')
             print('   |-> Apps:   ', str(env.traffic_generator.apps), sep='')
             print('   |-> Delays: ', str(batch_app_delay_avg[a]), sep='')
-            
-            """
-            # Create graphs
-            if(__name__ == "__main__"):
-                # Create histogram of replica (app delay distribution)
-                labels = ['Total application delay', '',
-                          'Total application delay distribution ('
-                          + agents[batch][0][1] + ' - Replica ' + str(a) + ')']
-                legend = []
-                for i in range(1, len(env.traffic_generator.apps) + 1):
-                    legend.append('Application ' + str(i)) #Placeholder?
-                bins = 64
-                makeFigureHist(batch_app_delays[a], bins, labels, legend)
-            """
         
         # Look for best performing agent (based on average delays)
         best = sum(batch_app_delay_avg[0])
@@ -362,20 +352,6 @@ def train_scenario(env):
         # Store the averages of application distribution throughout the
         # processing nodes of best agent
         test_act_distribution.append(batch_act_distribution[best_agent])
-        
-        """
-        # Create graphs
-        if(__name__ == "__main__"):
-            # Create histogram for best replica (app delay distribution)
-            labels = ['Total application delay', '',
-                      'Total application delay distribution ('
-                      + agents[batch][0][1] + ' - Best' + ')']
-            legend = []
-            for i in range(1, n_apps + 1):
-                legend.append('Application ' + str(i)) #Placeholder?
-            bins = 10
-            makeFigureHist(test_app_delays[batch], bins, labels, legend)
-        """
     
     # Create histogram of delays of each application (only best agents)
     if(__name__ == "__main__"):
@@ -389,7 +365,7 @@ def train_scenario(env):
                 y_axis.append(test_app_delays[batch][i])
             bins = 20
             max_delay = env.traffic_generator.app_max_delay[i]
-            makeFigureHistSubplot(y_axis, bins, labels, legend, max_delay)
+            makeFigureHistSingle(y_axis, bins, labels, legend, max_delay)
     
     """
     return {'train_block_probabilities': average_block_prob,
