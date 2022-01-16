@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 plt.close('all')
 
 # Funtion that creates, plots and labels a figure with given parameters
-def makeFigurePlot(x_axis, y_axis, optimal=None, labels=[], legend=[], log=False):
+def makeFigurePlot(x_axis, y_axis, optimal=None, labels=[], legend=[],
+                   log=False):
     
     # Insert optimal value to y_axis so it is show on the graph (as first
     # element so it's always the same colour)
@@ -62,7 +63,8 @@ def makeFigureHistSingle(y_axis, bins=10, labels=[], legend=[], thresh=None):
     if legend:
         plt.legend(legend)#, fontsize=16)
 
-# Funtion that creates, fills and labels subplot histograms with given parameters
+# Funtion that creates, fills and labels subplot histograms with given
+# parameters
 def makeFigureHistSubplot(y_axis, bins=10, labels=[], legend=[], thresh=None):
     
     # Create and plot figure

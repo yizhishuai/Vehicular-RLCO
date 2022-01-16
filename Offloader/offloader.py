@@ -35,7 +35,7 @@ if(__name__ == '__main__'):
 # Function used to get training data on a specific scenario
 def train_scenario(env):
     
-    # Environment parameters requiered for training/testing
+    # Environment parameters required for training/testing
     n_actions = env.action_space.n
     n_apps = len(env.traffic_generator.apps)
     n_nodes = len(env.node_type)
@@ -367,23 +367,13 @@ def train_scenario(env):
             max_delay = env.traffic_generator.app_max_delay[i]
             makeFigureHistSingle(y_axis, bins, labels, legend, max_delay)
     
-    """
-    return {'train_block_probabilities': average_block_prob,
-            'train_BW_block': average_BW_block,
-            'train_voluntary_blocks': average_voluntary_blocks,
-            'train_BW_voluntary_blocks': average_BW_voluntary_blocks,
-            'train_benefit': average_benefit,
-            'test_block_probabilities': test_block_prob,
-            'test_BW_block': test_BW_block,
-            'test_voluntary_blocks': test_voluntary_blocks,
-            'test_BW_voluntary_blocks': test_BW_voluntary_blocks,
-            'test_benefit': test_benefit,
-            'test_shortest_path_similarity': test_shortest_path_similarity,
-            'test_odu_voluntary_block_prob': test_odu_voluntary_block_prob,
-            'existing_odu': existing_odu, 'agents': agents}
-    """
-
-    return {'agents':agents}
+    return {'train_top_agent_rewards': top_agents_average,
+            'train_avg_total_times': average_total_training_times,
+            'train_avg_agent_times': average_agent_training_times,
+            'test_success_rate': test_success_rate,
+            'test_act_distribution': test_act_distribution,
+            'test_app_delay_avg': test_app_delay_avg,
+            'test_app_delays': test_app_delays, 'agents': agents}
 
 if(__name__ == "__main__"):
     train_scenario(env)
