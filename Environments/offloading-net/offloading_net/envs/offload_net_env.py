@@ -14,9 +14,10 @@ from gym import spaces
 from .traffic_generator import traffic_generator
 from .core_manager import core_manager
 from .parameters import (links, links_rate, links_delay, node_type, node_clock,
-                         node_cores, n_nodes, net_nodes, all_paths, node_comb,
-                         apps, app_cost, app_data_in, app_data_out,
-                         app_max_delay, app_rate, app_info)
+                         node_cores, n_nodes, net_nodes, n_vehicles, all_paths,
+                         node_comb, apps, app_cost, app_data_in, app_data_out,
+                         app_max_delay, app_rate, app_info, estimation_err_var,
+                         upper_var_limit, lower_var_limit)
 
 """
 Explanation on implemented discrete event simulator:
@@ -66,6 +67,8 @@ class offload_netEnv(gym.Env):
         self.app = 0
         # Origin node of next application (vehicle)
         self.app_origin = 0
+        # Origin node shift (multiple vehicles can be defined by one node)
+        self.app_shift = 0
         # Time until next application
         self.app_time = 0
         # Cost of processing the next application (clock clycles/bit)
@@ -96,6 +99,11 @@ class offload_netEnv(gym.Env):
             if(node_cores[a] > 0): # Ignore cloud nodes
                 self.n_cores += node_cores[a]
         
+        # Total number of vehicles in the network
+        self.n_vehicles = n_vehicles
+        # Number of vehicles per vehicle node (rounded to the nearest integer)
+        self.node_vehicles = 0
+        
         # Discrete event simulator traffic generation initialization
         self.traffic_generator = traffic_generator(n_nodes, net_nodes, apps,
                                                    app_cost, app_data_in,
@@ -103,9 +111,11 @@ class offload_netEnv(gym.Env):
                                                    app_rate, app_info)
         
         # Discrete event simulator core manager initialization
-        self.core_manager = core_manager()
+        self.core_manager = core_manager(estimation_err_var, upper_var_limit,
+                                         lower_var_limit)
         
-        # The observation space has an element per core in the network
+        # The observation space has an element per core in the network (with
+        # the exception of vehicles, where only one is observable at a time)
         self.observation_space = spaces.Box(low=0, high=1, shape=(
             self.n_cores + self.app_param_count, 1), dtype=np.float32)
         
@@ -156,10 +166,17 @@ class offload_netEnv(gym.Env):
         # processing node and reserve its core for the required time
         # If the selected processing node is the cloud no reservation is done
         # as it has infinite resources
+        # Due to a vehicle node defining multiple vehicles, a translation to
+        # the corresponding index is required
         self.total_delay = 0
         if(action != 0): # Not cloud
+            if(action == net_nodes): # Process locally
+                node_index = (net_nodes-1 + self.app_shift +
+                              (action-net_nodes)*self.node_vehicles)
+            else: # Process in network
+                node_index = action - 1
             self.total_delay = self.core_manager.reserve(
-                action-1, forward_delay, proc_delay, return_delay)
+                node_index, forward_delay, proc_delay, return_delay)
         else: # Cloud
             # Calculate the total delay of the application processing
             self.total_delay = forward_delay + proc_delay + return_delay
@@ -175,16 +192,20 @@ class offload_netEnv(gym.Env):
         # Assign variables from petition
         self.app = next_petition[0]
         self.app_origin = next_petition[1]
-        self.app_time = np.around(next_petition[2], self.precision_limit)
-        self.app_cost = next_petition[3]
-        self.app_data_in = next_petition[4]
-        self.app_data_out = next_petition[5]
-        self.app_max_delay = next_petition[6]
+        self.app_shift = next_petition[2]
+        self.app_time = np.around(next_petition[3], self.precision_limit)
+        self.app_cost = next_petition[4]
+        self.app_data_in = next_petition[5]
+        self.app_data_out = next_petition[6]
+        self.app_max_delay = next_petition[7]
         
         ## Observation calculation
+        # Calculate the next relevant vehicle index
+        vehicle_index = (net_nodes-1 + self.app_shift +
+                      (self.app_origin-net_nodes-1)*self.node_vehicles)
         # Core information
         self.obs = self.core_manager.update_and_calc_obs(
-            self.app_time, self.precision_limit)
+            self.app_time, self.precision_limit, vehicle_index)
         
         # Add current petition's application type to observation
         app_type = []
@@ -200,22 +221,28 @@ class offload_netEnv(gym.Env):
 
     def reset(self):
         
-        # Reset all cores
-        self.core_manager.reset(n_nodes, node_cores)
+        # Calculate the number of vehicles per vehicle node (rounded to the
+        # nearest integer)
+        self.node_vehicles = round(self.n_vehicles/self.node_type.count(4))
+        
+        # Reset and create all cores
+        self.core_manager.reset(n_nodes, node_cores, self.node_vehicles,
+                                self.node_type)
         
         # Generate initial petitions to get things going
-        self.traffic_generator.gen_initial_traffic()
+        self.traffic_generator.gen_initial_traffic(self.node_vehicles)
         
         # Get first petition
         next_petition = self.traffic_generator.gen_traffic()
         # Assign variables from petition
         self.app = next_petition[0]
         self.app_origin = next_petition[1]
-        self.app_time = next_petition[2]
-        self.app_cost = next_petition[3]
-        self.app_data_in = next_petition[4]
-        self.app_data_out = next_petition[5]
-        self.app_max_delay = next_petition[6]
+        self.app_shift = next_petition[2]
+        self.app_time = np.around(next_petition[3], self.precision_limit)
+        self.app_cost = next_petition[4]
+        self.app_data_in = next_petition[5]
+        self.app_data_out = next_petition[6]
+        self.app_max_delay = next_petition[7]
         
         # Calculate observation
         self.obs = np.array(

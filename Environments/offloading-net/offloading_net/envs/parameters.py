@@ -54,6 +54,16 @@ app_info = data['info'].values.tolist()
 n_nodes = len(node_type)
 net_nodes = sum(map(lambda x : x<4, node_type))
 
+# Define the default number of total vehicles in the network (each vehicle
+# node can represent multiple vehicles)
+n_vehicles = 10
+
+# Default variation of error in estimation of processing time (in ms)
+estimation_err_var = 1
+# Limits to variation of times
+upper_var_limit = 0.5 # Percentage out of corresponding total time
+lower_var_limit = 0.5 # Percentage out of corresponding total time
+
 ## Precalculated routes
 
 # Definition of network so paths can be calculated

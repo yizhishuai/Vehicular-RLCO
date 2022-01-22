@@ -55,7 +55,7 @@ def train_scenario(env):
     gammas = 0.995
     
     # Algorithms to be used
-    alg = ['DDQN', 'SARSA', 'PAL', 'TRPO']
+    alg = ['DDQN', 'TRPO']
     
     # Explorations that are to be analized (in algorithms that use them)
     explorators = 'const'
@@ -246,7 +246,7 @@ def train_scenario(env):
     # Testing total delays of each petition per application
     test_app_delays = []
     print('\n---TESTING---')
-    n_time_steps = 10000
+    n_time_steps = 100000
     for batch in range(len(agents)):
         batch_success_rate = []
         batch_act_distribution = []
@@ -365,15 +365,11 @@ def train_scenario(env):
                 y_axis.append(test_app_delays[batch][i])
             bins = 20
             max_delay = env.traffic_generator.app_max_delay[i]
-            makeFigureHistSingle(y_axis, bins, labels, legend, max_delay)
+            makeFigureHistSubplot(y_axis, bins, labels, legend, max_delay)
     
-    return {'train_top_agent_rewards': top_agents_average,
-            'train_avg_total_times': average_total_training_times,
+    return {'train_avg_total_times': average_total_training_times,
             'train_avg_agent_times': average_agent_training_times,
-            'test_success_rate': test_success_rate,
-            'test_act_distribution': test_act_distribution,
-            'test_app_delay_avg': test_app_delay_avg,
-            'test_app_delays': test_app_delays, 'agents': agents}
+            'test_success_rate': test_success_rate, 'agents': agents}
 
 if(__name__ == "__main__"):
     train_scenario(env)

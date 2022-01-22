@@ -18,13 +18,13 @@ import chainerrl
 import matplotlib.pyplot as plt
 from datetime import date, datetime
 
-from offloader import train_scenario, optimal_reward
+from offloader import train_scenario
 from graph_creator import makeFigurePlot
 
 ## Setup simulation state in temporal file (used for creating the appropriate
 ## environment, i.e. using the correct network topology)
 
-path_to_env = "../Environments/offloader-net/offloader_net/envs/"
+path_to_env = "../Environments/offloading-net/offloading_net/envs/"
 
 topologies = ["network_branchless"]
 topology_labels = ["Branchless network"]
@@ -38,7 +38,7 @@ for envs in env_dict:
         del gym.envs.registration.registry.env_specs[envs]
 del env_dict
 
-for n_sim in range(1,2):
+for n_sim in range(1):
     
     ## Define what is the current network topology for simulation in state file
     try:
@@ -56,30 +56,20 @@ for n_sim in range(1,2):
     
     ## Run simulations with varying network load on current network
     
-    train_top_agent_rewards = []
     train_avg_total_times = []
     train_avg_agent_times = []
     test_success_rate = []
-    test_act_distribution = []
-    test_app_delay_avg = []
-    test_app_delays = []
     n_vehicles = []
-    for i in range(10):
+    for i in range(5):
         # Vary network load parameters
-        n_vehicles.append(0.1+0.1*i) # TODO (This needs to be the nº of cars)
-        env.traffic_generator.node_rates = [
-                n_vehicles[i]*(len(env.traffic_generator.node_rates)-1)/2]*len(
-                env.traffic_generator.node_rates)
+        n_vehicles.append(10+20*i)
+        env.n_vehicles = n_vehicles[i]
         
         # Get metrics of trained and tested agents
         results = train_scenario(env)
-        train_top_agent_rewards.append(results['train_top_agent_rewards'])
         train_avg_total_times.append(results['train_avg_total_times'])
         train_avg_agent_times.append(results['train_avg_agent_times'])
         test_success_rate.append(results['test_success_rate'])
-        test_act_distribution.append(results['test_act_distribution'])
-        test_app_delay_avg.append(results['test_app_delay_avg'])
-        test_app_delays.append(results['test_app_delays'])
     
     agents = results['agents']
     
@@ -137,19 +127,12 @@ for n_sim in range(1,2):
     log_file.write('n_vehicles = ' + str(n_vehicles) + '\n')
     for a in range(len(agents)):
         log_file.write("\n---" + agents[a][0][1] + '\n')
-        log_file.write("-Training top agent rewards:\n" +
-                       str(train_top_agent_rewards[a]) + '\n')
         log_file.write("-Training average total times:\n" +
                        str(train_avg_total_times[a]) + '\n')
         log_file.write("-Training average agent processing times:\n" +
                        str(train_avg_agent_times[a]) + '\n')
         log_file.write("-Test success rate:\n" +
                        str(test_success_rate[a]) + '\n')
-        log_file.write("-Test act_distribution:\n" +
-                       str(test_act_distribution[a]) + '\n')
-        log_file.write("-Test app delay average:\n" +
-                       str(test_app_delay_avg[a]) + '\n')
-        log_file.write("-Test app_delays:\n" + str(test_app_delays[a]) + '\n')
     
     log_file.write("---------------------------------------------------\n\n")
     # .csv
@@ -160,13 +143,9 @@ for n_sim in range(1,2):
     for i in range(len(n_vehicles)):
         log_file.write('\n' + str(n_vehicles[i]))
         for a in range(len(agents)):
-            log_file.write(',' + str(train_top_agent_rewards[a][i]) + ',')
             log_file.write(str(train_avg_total_times[a][i]) + ',')
             log_file.write(str(train_avg_agent_times[a][i]) + ',')
             log_file.write(str(test_success_rate[a][i]) + ',')
-            log_file.write(str(test_act_distribution[a][i]) + ',')
-            log_file.write(str(test_app_delay_avg[a][i]) + ',')
-            log_file.write(str(test_app_delays[a][i]) + ',')
     
     log_file.close() # Close log file
 
