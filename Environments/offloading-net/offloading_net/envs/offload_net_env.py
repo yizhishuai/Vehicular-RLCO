@@ -203,6 +203,7 @@ class offload_netEnv(gym.Env):
         # Calculate the next relevant vehicle index
         vehicle_index = (net_nodes-1 + self.app_shift +
                       (self.app_origin-net_nodes-1)*self.node_vehicles)
+        
         # Core information
         self.obs = self.core_manager.update_and_calc_obs(
             self.app_time, self.precision_limit, vehicle_index)

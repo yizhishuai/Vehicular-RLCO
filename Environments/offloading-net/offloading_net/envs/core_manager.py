@@ -156,6 +156,7 @@ class core_manager():
         for node in range(len(self.slots_start)):
             core_load = []
             for core in range(len(self.slots_start[node])):
+                
                 # As time passes the core's queue advances
                 self.slots_start[node][core] -= app_time
                 self.slots_duration[node][core][-1] += app_time
@@ -173,12 +174,13 @@ class core_manager():
                     loop = range(started)
                 # Update queue one by one considering real values
                 for i in loop:
+                    # Check if in the updated queue the reservation
+                    # actually started processing
+                    if(self.reserv_start[node][core][i] >= 0):
+                        break
+                    
                     self.process_and_update_queue(i, node, core, app_time,
                                                   precision_limit)
-                    # Check if in the updated queue the next reservation
-                    # actually started processing
-                    if(self.reserv_start[node][core][i+1] >= 0):
-                        break
                 
                 # Check if any reservation has ended
                 ended = len(np.where(self.reserv_end[node][core] <= 0)[0])
@@ -207,6 +209,7 @@ class core_manager():
                         self.slots_duration[node][core] = np.delete(
                             self.slots_duration[node][core], range(i+1))
                         break
+                
                 # Calculate load of the core
                 if(node < self.net_nodes or node == obs_vehicle):
                     core_load.append(1 - (np.sum(
@@ -269,15 +272,15 @@ class core_manager():
                     self.reserv_start[node][core][i]) * self.lower_var_limit),
             precision_limit)
         
-        # Update reservation
-        self.reserv_end[node][core][i] += var
-        
         # Next adjacent time slot (if it exists)
         slot = np.where(self.slots_start[node][core] ==
                         self.reserv_end[node][core][i])
         # Next time slot (must exist)
         next_slot = np.where(self.slots_start[node][core] >=
                              self.reserv_end[node][core][i])
+        
+        # Update reservation
+        self.reserv_end[node][core][i] += var
         
         # If the processing took shorter than expected
         if(var < 0):
@@ -295,6 +298,10 @@ class core_manager():
             while(1): # This loop has to reach a break line
                 # Check that the queue is still within limits
                 if(self.reserv_end[node][core][i] > self.time_limit):
+                    self.slots_start[node][core][-1] = (
+                        self.reserv_start[node][core][i])
+                    self.slots_duration[node][core][-1] = (
+                        self.time_limit - self.reserv_start[node][core][i])
                     self.reserv_end[node][core] = np.delete(
                         self.reserv_end[node][core], range(
                             i, len(self.reserv_end[node][core])))
@@ -309,10 +316,6 @@ class core_manager():
                         self.slots_duration[node][core], range(
                             next_slot[0][0],
                             len(self.slots_duration[node][core])-1))
-                    self.slots_start[node][core][-1] = (
-                        self.reserv_end[node][core][i-1])
-                    self.slots_duration[node][core][-1] = (
-                        self.time_limit - self.reserv_end[node][core][i-1])
                     break
                 # Update the adjancent time slot if it exists
                 if(len(slot[0])):
