@@ -35,13 +35,18 @@ class core_manager():
         # Times at with each reservation starts and ends
         self.reserv_start = []
         self.reserv_end = []
+        # Estimated total delay of each reservation
+        self.total_est_delay = []
+        # Type of application of each reservation
+        self.app_type = []
         
         # Limit for relative core load calculation (in ms)
         self.time_limit = 14
         # Limit for maximum reservations in queue
-        self.reserv_limit = 8
+        self.reserv_limit = 2
     
-    def reserve(self, action, forward_delay, proc_delay, return_delay):
+    def reserve(self, action, forward_delay, proc_delay, return_delay,
+                app_type):
         
         # Look for time slots
         available = []
@@ -80,20 +85,23 @@ class core_manager():
         core = next_core[0][0]
         slot = next_core[0][1]
         
-        # Calculate the total delay
-        total_delay = (max(forward_delay, self.slots_start[action][core][slot])
-                       + proc_delay + return_delay)
+        # Calculate the total estimated delay
+        total_est_delay = (max(forward_delay,
+                               self.slots_start[action][core][slot]) +
+                           proc_delay + return_delay)
         
         # Register the reservation
         self.queue_limit[action][core] -= 1
         
         # Assign the reservation to the first available time slot
         # If arrival of data is prior to slot's start
+        start_time = 0
         if(forward_delay <= self.slots_start[action][core][slot]):
             # Register the reservation's start time
             self.reserv_start[action][core] = np.sort(np.append(
                 self.reserv_start[action][core],
                 self.slots_start[action][core][slot]))
+            start_time = self.slots_start[action][core][slot]
             # Shorten the slot
             self.slots_start[action][core][slot] += proc_delay
             self.slots_duration[action][core][slot] -= proc_delay
@@ -117,6 +125,7 @@ class core_manager():
             # Register the reservation's start time
             self.reserv_start[action][core] = np.sort(np.append(
                 self.reserv_start[action][core], forward_delay))
+            start_time = forward_delay
             # Create new slot before the new reservation
             self.slots_start[action][core] = np.insert(
                 self.slots_start[action][core], slot,
@@ -145,12 +154,22 @@ class core_manager():
                 raise KeyboardInterrupt(
                     "Trouble with precision at core queues!")
         
-        return total_delay
+        # Find the reservations index and register its total estimated delay
+        index = np.where(self.reserv_start[action][core] == start_time)[0][0]
+        self.total_est_delay[action][core] = np.insert(
+            self.total_est_delay[action][core], index, total_est_delay)
+        # Register the type of application that corresponds to this reservation
+        self.app_type[action][core] = np.insert(
+            self.app_type[action][core], index, app_type)
+        
+        return total_est_delay
     
     def update_and_calc_obs(self, app_time, precision_limit, obs_vehicle):
         
-        ## Observation calculation
+        ## Observation and total real delays calculation
         obs = np.array([], dtype=np.float32)
+        total_delay = np.array([], dtype=np.float32)
+        app_type = np.array([], dtype=np.int32)
         # Create an array with each element being a core (the self.cores
         # variable is an irregular array so a loop is necessary)
         for node in range(len(self.slots_start)):
@@ -182,14 +201,35 @@ class core_manager():
                     self.process_and_update_queue(i, node, core, app_time,
                                                   precision_limit)
                 
+                # Check if any reservation has been canceled
+                canceled = len(np.where(
+                    self.total_est_delay[node][core] < 0)[0])
+                if(canceled):
+                    total_delay = np.append(total_delay,
+                        self.total_est_delay[node][core][-canceled::])
+                    self.total_est_delay[node][core] = np.delete(
+                        self.total_est_delay[node][core], range(-canceled, 0))
+                    app_type = np.append(
+                        app_type, self.app_type[node][core][-canceled::])
+                    self.app_type[node][core] = np.delete(
+                        self.app_type[node][core], range(-canceled, 0))
+                
                 # Check if any reservation has ended
                 ended = len(np.where(self.reserv_end[node][core] <= 0)[0])
-                if(ended > 0):
+                if(ended):
                     self.queue_limit[node][core] += ended
                     self.reserv_start[node][core] = np.delete(
                         self.reserv_start[node][core], range(ended))
                     self.reserv_end[node][core] = np.delete(
                         self.reserv_end[node][core], range(ended))
+                    total_delay = np.append(
+                        total_delay, self.total_est_delay[node][core][0:ended])
+                    self.total_est_delay[node][core] = np.delete(
+                        self.total_est_delay[node][core], range(ended))
+                    app_type = np.append(
+                        app_type, self.app_type[node][core][0:ended])
+                    self.app_type[node][core] = np.delete(
+                        self.app_type[node][core], range(ended))
                 
                 # Check if any slot has ended
                 if(np.amax(self.slots_start[node][core]) < 0):
@@ -217,7 +257,7 @@ class core_manager():
             # Add core load to observation
             obs = np.append(obs, np.array(core_load, dtype=np.float32))
         
-        return obs
+        return obs, total_delay, app_type
     
     def reset(self, n_nodes, node_cores, node_vehicles, node_type):
         
@@ -230,6 +270,8 @@ class core_manager():
         self.queue_limit = []
         self.reserv_start = []
         self.reserv_end = []
+        self.total_est_delay = []
+        self.app_type = []
         for a in range(n_nodes):
             if(node_type[a] != 1): # Ignore cloud nodes
                 if(node_type[a] != 4): # If it's not a vehicle
@@ -241,6 +283,8 @@ class core_manager():
                     start = []
                     reserv_starts = []
                     reserv_ends = []
+                    total_est_delays = []
+                    app_types = []
                     limit = [self.reserv_limit]*node_cores[a]
                     for i in range(node_cores[a]):
                         duration.append(
@@ -248,11 +292,15 @@ class core_manager():
                         start.append(np.array([0], dtype=np.float64))
                         reserv_starts.append(np.array([], dtype=np.float64))
                         reserv_ends.append(np.array([], dtype=np.float64))
+                        total_est_delays.append(np.array([], dtype=np.float64))
+                        app_types.append(np.array([], dtype=np.int32))
                     self.slots_duration.append(duration)
                     self.slots_start.append(start)
                     self.queue_limit.append(limit)
                     self.reserv_start.append(reserv_starts)
                     self.reserv_end.append(reserv_ends)
+                    self.total_est_delay.append(total_est_delays)
+                    self.app_type.append(app_types)
     
     def process_and_update_queue(self, i, node, core, app_time,
                                  precision_limit):
@@ -281,6 +329,7 @@ class core_manager():
         
         # Update reservation
         self.reserv_end[node][core][i] += var
+        self.total_est_delay[node][core][i] += var
         
         # If the processing took shorter than expected
         if(var < 0):
@@ -302,6 +351,9 @@ class core_manager():
                         self.reserv_start[node][core][i])
                     self.slots_duration[node][core][-1] = (
                         self.time_limit - self.reserv_start[node][core][i])
+                    self.total_est_delay[node][core][i::] = -1
+                    self.queue_limit[node][core] += len(
+                        range(i, len(self.reserv_start[node][core])))
                     self.reserv_end[node][core] = np.delete(
                         self.reserv_end[node][core], range(
                             i, len(self.reserv_end[node][core])))
@@ -347,6 +399,7 @@ class core_manager():
                 # Update reservation
                 self.reserv_start[node][core][i] += var
                 self.reserv_end[node][core][i] += var
+                self.total_est_delay[node][core][i] += var
                 
                 # Security check to avoid infinite loop
                 if(i > self.reserv_limit):

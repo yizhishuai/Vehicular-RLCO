@@ -55,7 +55,7 @@ def train_scenario(env):
     gammas = 0.995
     
     # Algorithms to be used
-    alg = ['DDQN', 'TRPO']
+    alg = ['DDQN','SARSA','PAL','TRPO']
     
     # Explorations that are to be analized (in algorithms that use them)
     explorators = 'const'
@@ -115,7 +115,7 @@ def train_scenario(env):
     print('---TRAINING---')
     # Number of time steps to archive a stationary state in the network
     start_up = 1000
-    n_time_steps = 110000 # For 10^-3 precision -> ~10^5 sample points
+    n_time_steps = 310000 # For 10^-3 precision -> ~10^5 sample points
     # Number of last episodes to use for average reward calculation
     averaging_window = 10000
     x_axis = range(1, start_up+n_time_steps+1) # X axis for ploting results
@@ -167,10 +167,10 @@ def train_scenario(env):
                 if(__name__ == "__main__"):
                     if t % 10 == 0:
                         print('Time step', t)
-                        if(reward >= 0):
-                            print('Application processed succesfully')
+                        if(env.total_delay_est >= 0):
+                            print('Application queued/processed succesfully')
                         else:
-                            print('Application processed too slowly')
+                            print('Failed to queue/process the application')
                         env.render()
             
             # End of training
@@ -260,7 +260,8 @@ def train_scenario(env):
             obs = env.reset()
             done = False
             reward = 0
-            success = 0
+            total_app_count = 0
+            success_count = 0
             last_app = 0
             t = 0
             act_distribution = np.zeros((n_apps, n_nodes), dtype=np.float32)
@@ -274,22 +275,27 @@ def train_scenario(env):
                 action = agents[batch][a][0].act(obs)
                 obs, reward, done, _ = env.step(action)
                 if(t >= start_up):
-                    if(reward >= 0):
-                        success += 1
-                        
+                    total_app_count += env.total_app_count
+                    success_count += env.success_count
+                    
                     # Count the times a certain node processed a specific app
                     act_distribution[last_app-1][action] += 1
                     app_count[last_app-1] += 1
                     
-                    # Store the delay of the last processed application
-                    if(env.total_delay >= 0): # Only if processed
-                        app_delays[last_app-1].append(env.total_delay)
-                        app_processed[last_app-1] += 1
+                    # Store the delay of processed applications in the last
+                    # time step and count them
+                    for i in range(n_apps):
+                        indexes = np.where(env.app_types == i+1)[0]
+                        total_delays = env.total_delays[indexes]
+                        indexes = np.where(total_delays >= 0)[0]
+                        for j in indexes:
+                            app_delays[i].append(total_delays[j])
+                        app_processed[i] += len(indexes)
                 
                 t += 1
             
             # Calculate the fraction of successfully processed applications
-            batch_success_rate.append(success/n_time_steps)
+            batch_success_rate.append(success_count/total_app_count)
             
             # Calculate the averages of application distribution throughout the
             # processing nodes
@@ -306,7 +312,10 @@ def train_scenario(env):
             # Calculate and store the average total delay of each application
             temp = []
             for i in range(n_apps):
-                temp.append(sum(app_delays[i])/app_processed[i])
+                if(app_processed[i]):
+                    temp.append(sum(app_delays[i])/app_processed[i])
+                else:
+                    temp.append(0) # Average cannot be calculated
             batch_app_delay_avg.append(temp)
             
             # Store the registered delays for the tested agents
@@ -319,7 +328,7 @@ def train_scenario(env):
             print('   |-> Apps: ', str(env.traffic_generator.apps), sep='')
             print('   |-> Rate: ', str(list(
                 np.divide(batch_app_processed[a], batch_app_count[a]))),
-                sep='')
+                sep='') # TODO (imprecision)
             print('   -Action distribution:')
             for i in range(n_apps):
                 print('   |-> App ', (i+1), ': ', sep='')

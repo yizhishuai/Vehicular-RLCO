@@ -87,8 +87,17 @@ class offload_netEnv(gym.Env):
         self.max_delay = max(app_max_delay)
         self.app_param_count = 4
         
-        # Total delay of current application
-        self.total_delay = 0
+        # Total estimated delay of current application
+        self.total_delay_est = 0
+        # Total real delays of all processed application since last time step
+        self.total_delays = 0
+        self.app_types = 0 # Corresponding application types
+        
+        # For metrics
+        # Total number of terminated applications in this time step.
+        self.total_app_count = 0
+        # Number of succesfully processed applications in this time step
+        self.success_count = 0
         
         # For monitoring purposes the observation will be kept at all times
         self.obs = 0
@@ -168,24 +177,31 @@ class offload_netEnv(gym.Env):
         # as it has infinite resources
         # Due to a vehicle node defining multiple vehicles, a translation to
         # the corresponding index is required
-        self.total_delay = 0
-        if(action != 0): # Not cloud
+        self.total_delay_est = 0
+        self.total_delays = np.array([], dtype=np.float32)
+        self.app_types = np.array([], dtype=np.int32)
+        self.total_app_count = 0
+        if(action): # Not cloud
             if(action == net_nodes): # Process locally
                 node_index = (net_nodes-1 + self.app_shift +
                               (action-net_nodes)*self.node_vehicles)
             else: # Process in network
                 node_index = action - 1
-            self.total_delay = self.core_manager.reserve(
-                node_index, forward_delay, proc_delay, return_delay)
+            self.total_delay_est = self.core_manager.reserve(
+                node_index, forward_delay, proc_delay, return_delay, self.app)
         else: # Cloud
-            # Calculate the total delay of the application processing
-            self.total_delay = forward_delay + proc_delay + return_delay
+            # Calculate the total estimated delay of the application processing
+            self.total_delay_est = forward_delay + proc_delay + return_delay
+            self.total_delays = np.append(
+                self.total_delays, max(-1, self.total_delay_est))
+            self.app_types = np.append(self.app_types, self.app)
         
-        # Check estimated delay for the application and calculate reward
-        if(self.total_delay > 0): # Application processed
-            reward = min(0, self.app_max_delay - self.total_delay)
-        else: # Application not processed
+        ## Reward calculation (a priori)
+        if(action and self.total_delay_est < 0): # Application not queued
             reward = -1000
+            self.total_app_count += 1
+        else: # Application queued/processed
+            reward = 0
         
         # Get next arriving petition
         next_petition = self.traffic_generator.gen_traffic()
@@ -204,9 +220,31 @@ class offload_netEnv(gym.Env):
         vehicle_index = (net_nodes-1 + self.app_shift +
                       (self.app_origin-net_nodes-1)*self.node_vehicles)
         
-        # Core information
-        self.obs = self.core_manager.update_and_calc_obs(
-            self.app_time, self.precision_limit, vehicle_index)
+        # Core and processed applications information
+        self.obs, total_delays, app_types = (
+            self.core_manager.update_and_calc_obs(
+                self.app_time, self.precision_limit, vehicle_index))
+        
+        self.total_delays = np.append(self.total_delays, total_delays)
+        self.app_types = np.append(self.app_types, app_types)
+        
+        self.total_app_count += len(self.total_delays) # For metrics
+        
+        ## Reward calculation (a posteriori)
+        # Check for processed and unprocessed applications
+        processed = np.where(self.total_delays >= 0)[0]
+        failed = np.where(self.total_delays < 0)[0]
+        # Find corresponding max tolerable delays
+        max_delays = np.array([], dtype=np.float32)
+        for i in self.app_types:
+            max_delays = np.append(max_delays, app_max_delay[i-1])
+        # Calculate total reward for current time step
+        remaining = np.clip(
+            max_delays[processed] - self.total_delays[processed], None, 0)
+        reward += np.sum(remaining)
+        reward -= len(self.total_delays[failed]) * 1000
+        
+        self.success_count = len(np.where(remaining >= 0)[0]) # For metrics
         
         # Add current petition's application type to observation
         app_type = []
