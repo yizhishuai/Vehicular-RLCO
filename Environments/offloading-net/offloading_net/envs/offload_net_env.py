@@ -95,7 +95,7 @@ class offload_netEnv(gym.Env):
         
         # For metrics
         # Total number of terminated applications in this time step.
-        self.total_app_count = 0
+        self.app_count = 0
         # Number of succesfully processed applications in this time step
         self.success_count = 0
         
@@ -180,7 +180,7 @@ class offload_netEnv(gym.Env):
         self.total_delay_est = 0
         self.total_delays = np.array([], dtype=np.float32)
         self.app_types = np.array([], dtype=np.int32)
-        self.total_app_count = 0
+        self.app_count = [0]*len(apps)
         if(action): # Not cloud
             if(action == net_nodes): # Process locally
                 node_index = (net_nodes-1 + self.app_shift +
@@ -199,7 +199,7 @@ class offload_netEnv(gym.Env):
         ## Reward calculation (a priori)
         if(action and self.total_delay_est < 0): # Application not queued
             reward = -1000
-            self.total_app_count += 1
+            self.app_count[self.app-1] += 1
         else: # Application queued/processed
             reward = 0
         
@@ -228,8 +228,6 @@ class offload_netEnv(gym.Env):
         self.total_delays = np.append(self.total_delays, total_delays)
         self.app_types = np.append(self.app_types, app_types)
         
-        self.total_app_count += len(self.total_delays) # For metrics
-        
         ## Reward calculation (a posteriori)
         # Check for processed and unprocessed applications
         processed = np.where(self.total_delays >= 0)[0]
@@ -238,6 +236,7 @@ class offload_netEnv(gym.Env):
         max_delays = np.array([], dtype=np.float32)
         for i in self.app_types:
             max_delays = np.append(max_delays, app_max_delay[i-1])
+            self.app_count[i-1] += 1
         # Calculate total reward for current time step
         remaining = np.clip(
             max_delays[processed] - self.total_delays[processed], None, 0)

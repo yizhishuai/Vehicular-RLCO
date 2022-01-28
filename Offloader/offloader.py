@@ -10,6 +10,8 @@ import gym
 import time
 import numpy as np
 
+from operator import add
+
 from agent_creator import make_training_agents
 from graph_creator import (makeFigurePlot, makeFigureHistSingle,
                            makeFigureHistSubplot)
@@ -260,11 +262,11 @@ def train_scenario(env):
             obs = env.reset()
             done = False
             reward = 0
-            total_app_count = 0
             success_count = 0
             last_app = 0
             t = 0
             act_distribution = np.zeros((n_apps, n_nodes), dtype=np.float32)
+            act_count = [0]*n_apps
             app_count = [0]*n_apps
             app_processed = [0]*n_apps
             app_delays = []
@@ -275,12 +277,13 @@ def train_scenario(env):
                 action = agents[batch][a][0].act(obs)
                 obs, reward, done, _ = env.step(action)
                 if(t >= start_up):
-                    total_app_count += env.total_app_count
+                    # Count the returning applications
                     success_count += env.success_count
+                    app_count = list(map(add, app_count, env.app_count))
                     
                     # Count the times a certain node processed a specific app
                     act_distribution[last_app-1][action] += 1
-                    app_count[last_app-1] += 1
+                    act_count[last_app-1] += 1
                     
                     # Store the delay of processed applications in the last
                     # time step and count them
@@ -295,12 +298,12 @@ def train_scenario(env):
                 t += 1
             
             # Calculate the fraction of successfully processed applications
-            batch_success_rate.append(success_count/total_app_count)
+            batch_success_rate.append(success_count/sum(app_count))
             
             # Calculate the averages of application distribution throughout the
             # processing nodes
             for i in range(n_apps):
-                act_distribution[i] = act_distribution[i]/app_count[i]
+                act_distribution[i] = act_distribution[i]/act_count[i]
             batch_act_distribution.append(act_distribution)
             
             # Store the application petition count for the last simulation
@@ -328,7 +331,7 @@ def train_scenario(env):
             print('   |-> Apps: ', str(env.traffic_generator.apps), sep='')
             print('   |-> Rate: ', str(list(
                 np.divide(batch_app_processed[a], batch_app_count[a]))),
-                sep='') # TODO (imprecision)
+                sep='')
             print('   -Action distribution:')
             for i in range(n_apps):
                 print('   |-> App ', (i+1), ': ', sep='')
