@@ -10,6 +10,7 @@ Created on Sat Nov  13 16:44:00 2021
 import numpy as np
 import gym
 from gym import spaces
+from itertools import product
 
 from .traffic_generator import traffic_generator
 from .core_manager import core_manager
@@ -62,6 +63,9 @@ class offload_netEnv(gym.Env):
         
         # Node type list (used as information for metrics during testing)
         self.node_type = node_type
+        
+        # Links bitrate (in case it needs to be modified during the simulation)
+        self.links_rate = links_rate
         
         # Type of next application
         self.app = 0
@@ -157,7 +161,7 @@ class offload_netEnv(gym.Env):
                 link = [path[a], path[a+1]]
                 link.sort()
                 link_index = links.index(link)
-                link_rate = links_rate[link_index] # in Mbit/s
+                link_rate = self.links_rate[link_index] # in Mbit/s
                 link_delay = links_delay[link_index] # in ms
                 
                 forward_delay += (self.app_data_in/link_rate) + link_delay
@@ -259,9 +263,29 @@ class offload_netEnv(gym.Env):
 
     def reset(self):
         
-        # Calculate the number of vehicles per vehicle node (rounded to the
-        # nearest integer)
+        # Define the number of vehicles per vehicle node (rounded to the
+        # nearest integer) - Even distribution
         self.node_vehicles = round(self.n_vehicles/self.node_type.count(4))
+        
+        # Override the bitrate of the shared wireless links between RSUs (type
+        # 3 nodes) with vehicles (type 4 nodes) using an approximation
+        # Find vehicle nodes and non-vehicle nodes
+        RSUs = [node+1 for node, n_type in enumerate(node_type) if n_type == 3]
+        vehicles = (
+            [node+1 for node, n_type in enumerate(node_type) if n_type == 4])
+        # Calculate all possible combinations
+        shared = product(RSUs, vehicles)
+        shared = list(map(lambda x : list(x), node_comb))
+        # Update the only the existings links
+        for i in shared:
+            i.sort()
+            if(i in links):
+                # Worst case scenario
+                self.links_rate[links.index(i)] = (
+                    self.links_rate[links.index(i)]/self.node_vehicles)
+        
+        print(self.links_rate)
+        raise KeyboardInterrupt()
         
         # Reset and create all cores
         self.core_manager.reset(n_nodes, node_cores, self.node_vehicles,

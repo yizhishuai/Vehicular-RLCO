@@ -40,6 +40,9 @@ class core_manager():
         # Type of application of each reservation
         self.app_type = []
         
+        # Time to add to total time for next update of each core
+        self.update_time = []
+        
         # Limit for relative core load calculation (in ms)
         self.time_limit = 14
         # Limit for maximum reservations in queue
@@ -170,11 +173,19 @@ class core_manager():
         obs = np.array([], dtype=np.float32)
         total_delay = np.array([], dtype=np.float32)
         app_type = np.array([], dtype=np.int32)
+        # Update the times which each core has to be updated by
+        for node in range(len(self.update_time)):
+            for core in range(len(self.update_time[node])):
+                self.update_time[node][core] += app_time
         # Create an array with each element being a core (the self.cores
         # variable is an irregular array so a loop is necessary)
-        for node in range(len(self.slots_start)):
+        for node in list(range(self.net_nodes)) + [obs_vehicle]:
             core_load = []
             for core in range(len(self.slots_start[node])):
+                
+                # Check update time for this core
+                app_time = self.update_time[node][core]
+                self.update_time[node][core] = 0
                 
                 # As time passes the core's queue advances
                 self.slots_start[node][core] -= app_time
@@ -251,9 +262,8 @@ class core_manager():
                         break
                 
                 # Calculate load of the core
-                if(node < self.net_nodes or node == obs_vehicle):
-                    core_load.append(1 - (np.sum(
-                        self.slots_duration[node][core])/self.time_limit))
+                core_load.append(1 - (np.sum(
+                    self.slots_duration[node][core])/self.time_limit))
             # Add core load to observation
             obs = np.append(obs, np.array(core_load, dtype=np.float32))
         
@@ -272,6 +282,7 @@ class core_manager():
         self.reserv_end = []
         self.total_est_delay = []
         self.app_type = []
+        self.update_time = []
         for a in range(n_nodes):
             if(node_type[a] != 1): # Ignore cloud nodes
                 if(node_type[a] != 4): # If it's not a vehicle
@@ -286,6 +297,7 @@ class core_manager():
                     total_est_delays = []
                     app_types = []
                     limit = [self.reserv_limit]*node_cores[a]
+                    update_times = [0]*node_cores[a]
                     for i in range(node_cores[a]):
                         duration.append(
                             np.array([self.time_limit], dtype=np.float64))
@@ -301,6 +313,7 @@ class core_manager():
                     self.reserv_end.append(reserv_ends)
                     self.total_est_delay.append(total_est_delays)
                     self.app_type.append(app_types)
+                    self.update_time.append(update_times)
     
     def process_and_update_queue(self, i, node, core, app_time,
                                  precision_limit):

@@ -56,7 +56,7 @@ net_nodes = sum(map(lambda x : x<4, node_type))
 
 # Define the default number of total vehicles in the network (each vehicle
 # node can represent multiple vehicles)
-n_vehicles = 1
+n_vehicles = 3
 
 # Default variation of error in estimation of processing time (in ms)
 estimation_err_var = 0
