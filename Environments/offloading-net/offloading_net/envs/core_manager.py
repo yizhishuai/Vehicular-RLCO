@@ -44,9 +44,9 @@ class core_manager():
         self.update_time = []
         
         # Limit for relative core load calculation (in ms)
-        self.time_limit = 14
+        self.time_limit = 50
         # Limit for maximum reservations in queue
-        self.reserv_limit = 2
+        self.reserv_limit = 10
     
     def reserve(self, action, forward_delay, proc_delay, return_delay,
                 app_type):

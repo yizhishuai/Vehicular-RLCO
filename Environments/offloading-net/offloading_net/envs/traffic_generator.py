@@ -49,7 +49,7 @@ class traffic_generator():
         
         # Update arrival times for the rest of the petitions in the queue
         for i in range(len(self.petition_Q)):
-            self.petition_Q[i][3] -= current_petition[3] # TODO (optimize??)
+            self.petition_Q[i][3] -= current_petition[3]
         
         ## Generate next petition from node that is about to be processed
         app_index = current_petition[0] - 1

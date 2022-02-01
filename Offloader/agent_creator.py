@@ -219,7 +219,7 @@ def make_training_agents(
             exp_types = 'const' # Any valid value
             epsilons_save = epsilons
             epsilons = 0.2 # Any valid value
-            print('Warning: Not using exp_types and epsilons parameters for' +
+            print('Warning: Not using exp_types and epsilons parameters for ' +
                   alg[a])
         
         # Error handling
@@ -418,7 +418,6 @@ def make_training_agents(
         if(alg[a] in 'TRPO'):
             exp_types = exp_types_save
             epsilons = epsilons_save
-            print('Warning: Not using exp_types and epsilons parameters')
     
     return agents
 

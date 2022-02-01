@@ -54,7 +54,7 @@ is on the processing (the cores).
 """
 
 class offload_netEnv(gym.Env):
-    metadata = {'render.modes': ['human']}
+    metadata = {'render.modes': ['human']} #TODO (this serves no purpose, I think)
 
     def __init__(self):
         # Precision limit (in number of decimals) for numpy.float64 variables
@@ -135,6 +135,10 @@ class offload_netEnv(gym.Env):
         self.action_space = spaces.Discrete(net_nodes + 1)
 
     def step(self, action):
+        
+        if(self.n_vehicles == 300):
+            print("Second iteration ok")
+            raise KeyboardInterrupt()
         
         # For each application, the node that processes it cannot be another
         # vehicle, but the local vehicle (the one that generates the petition)
@@ -259,7 +263,7 @@ class offload_netEnv(gym.Env):
 
         done = False # This environment is continuous and is never done
 
-        return np.array([self.obs, reward, done, ""])
+        return np.array([self.obs, reward, done, ""], dtype=object)
 
     def reset(self):
         
@@ -280,12 +284,9 @@ class offload_netEnv(gym.Env):
         for i in shared:
             i.sort()
             if(i in links):
-                # Worst case scenario
+                # Worst case scenario (with limit)
                 self.links_rate[links.index(i)] = (
-                    self.links_rate[links.index(i)]/self.node_vehicles)
-        
-        print(self.links_rate)
-        raise KeyboardInterrupt()
+                    self.links_rate[links.index(i)]/5)
         
         # Reset and create all cores
         self.core_manager.reset(n_nodes, node_cores, self.node_vehicles,
@@ -312,9 +313,12 @@ class offload_netEnv(gym.Env):
         
         return self.obs
 
-    def render(self, mode='human'):
+    def render(self, mode='human'): #TODO (mode serves no purpose, I think)
         # Print current core reservation times
         print('Core reservation time:', self.obs[0:self.n_cores])
         # Print next application to be processed
         print('Next application:', self.app)
+    
+    def set_total_vehicles(self, total_vehicles):
+        self.n_vehicles = total_vehicles
 
