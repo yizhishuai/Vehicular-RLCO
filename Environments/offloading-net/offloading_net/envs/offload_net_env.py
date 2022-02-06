@@ -18,7 +18,8 @@ from .parameters import (links, links_rate, links_delay, node_type, node_clock,
                          node_cores, n_nodes, net_nodes, n_vehicles, all_paths,
                          node_comb, apps, app_cost, app_data_in, app_data_out,
                          app_max_delay, app_rate, app_info, estimation_err_var,
-                         upper_var_limit, lower_var_limit)
+                         upper_var_limit, lower_var_limit, time_limit,
+                         reserv_limit)
 
 """
 Explanation on implemented discrete event simulator:
@@ -54,12 +55,11 @@ is on the processing (the cores).
 """
 
 class offload_netEnv(gym.Env):
-    metadata = {'render.modes': ['human']} #TODO (this serves no purpose, I think)
 
     def __init__(self):
         # Precision limit (in number of decimals) for numpy.float64 variables
         # used to avoid overflow when operating with times in the simulator
-        self.precision_limit = 13 # Numpy.float64 has 15 decimals
+        self.precision_limit = 10 # Numpy.float64 has 15 decimals
         
         # Node type list (used as information for metrics during testing)
         self.node_type = node_type
@@ -77,9 +77,9 @@ class offload_netEnv(gym.Env):
         self.app_time = 0
         # Cost of processing the next application (clock clycles/bit)
         self.app_cost = 0
-        # Input data quantity from the next application (bits)
+        # Input data quantity from the next application (kbits)
         self.app_data_in = 0
-        # Output data quantity from the next application (bits)
+        # Output data quantity from the next application (kbits)
         self.app_data_out = 0
         # Maximum tolerable delay for the next application (ms)
         self.app_max_delay = 0
@@ -125,7 +125,8 @@ class offload_netEnv(gym.Env):
         
         # Discrete event simulator core manager initialization
         self.core_manager = core_manager(estimation_err_var, upper_var_limit,
-                                         lower_var_limit)
+                                         lower_var_limit, time_limit,
+                                         reserv_limit)
         
         # The observation space has an element per core in the network (with
         # the exception of vehicles, where only one is observable at a time)
@@ -135,10 +136,6 @@ class offload_netEnv(gym.Env):
         self.action_space = spaces.Discrete(net_nodes + 1)
 
     def step(self, action):
-        
-        if(self.n_vehicles == 300):
-            print("Second iteration ok")
-            raise KeyboardInterrupt()
         
         # For each application, the node that processes it cannot be another
         # vehicle, but the local vehicle (the one that generates the petition)
@@ -157,7 +154,7 @@ class offload_netEnv(gym.Env):
         # For each action one node for processing an application is chosen,
         # reserving one of its cores (might queue)
         
-        # Calculate the transmission delay for the application's data
+        # Calculate the transmission delay for the application's data (in ms)
         forward_delay = 0
         return_delay = 0
         if path:
@@ -165,14 +162,14 @@ class offload_netEnv(gym.Env):
                 link = [path[a], path[a+1]]
                 link.sort()
                 link_index = links.index(link)
-                link_rate = self.links_rate[link_index] # in Mbit/s
+                link_rate = self.links_rate[link_index] # in kbit/s
                 link_delay = links_delay[link_index] # in ms
                 
-                forward_delay += (self.app_data_in/link_rate) + link_delay
-                return_delay += link_delay + (self.app_data_out/link_rate)
+                forward_delay += (self.app_data_in/link_rate)*1000 + link_delay
+                return_delay += link_delay + (self.app_data_out/link_rate)*1000
         
-        # Calculate the processing delay at the node
-        proc_delay = (self.app_data_in*self.app_cost/node_clock[action])
+        # Calculate the processing delay at the node (in ms)
+        proc_delay = (self.app_data_in*self.app_cost/node_clock[action])*1000
         
         # Limit the precision of the numbers to prevent overflow
         forward_delay = np.around(forward_delay, self.precision_limit)
@@ -195,13 +192,13 @@ class offload_netEnv(gym.Env):
                               (action-net_nodes)*self.node_vehicles)
             else: # Process in network
                 node_index = action - 1
-            self.total_delay_est = self.core_manager.reserve(
+            self.total_delay_est = self.core_manager.reserve_with_planning(
                 node_index, forward_delay, proc_delay, return_delay, self.app)
         else: # Cloud
             # Calculate the total estimated delay of the application processing
             self.total_delay_est = forward_delay + proc_delay + return_delay
             self.total_delays = np.append(
-                self.total_delays, max(-1, self.total_delay_est))
+                self.total_delays, self.total_delay_est)
             self.app_types = np.append(self.app_types, self.app)
         
         ## Reward calculation (a priori)
@@ -219,8 +216,8 @@ class offload_netEnv(gym.Env):
         self.app_shift = next_petition[2]
         self.app_time = np.around(next_petition[3], self.precision_limit)
         self.app_cost = next_petition[4]
-        self.app_data_in = next_petition[5]
-        self.app_data_out = next_petition[6]
+        self.app_data_in = next_petition[5] # in kb
+        self.app_data_out = next_petition[6] # in kb
         self.app_max_delay = next_petition[7]
         
         ## Observation calculation
@@ -286,7 +283,7 @@ class offload_netEnv(gym.Env):
             if(i in links):
                 # Worst case scenario (with limit)
                 self.links_rate[links.index(i)] = (
-                    self.links_rate[links.index(i)]/5)
+                    links_rate[links.index(i)]/5)
         
         # Reset and create all cores
         self.core_manager.reset(n_nodes, node_cores, self.node_vehicles,
@@ -313,7 +310,7 @@ class offload_netEnv(gym.Env):
         
         return self.obs
 
-    def render(self, mode='human'): #TODO (mode serves no purpose, I think)
+    def render(self, mode='human'):
         # Print current core reservation times
         print('Core reservation time:', self.obs[0:self.n_cores])
         # Print next application to be processed

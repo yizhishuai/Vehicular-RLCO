@@ -56,13 +56,17 @@ net_nodes = sum(map(lambda x : x<4, node_type))
 
 # Define the default number of total vehicles in the network (each vehicle
 # node can represent multiple vehicles)
-n_vehicles = 3000
+n_vehicles = 50
 
 # Default variation of error in estimation of processing time (in ms)
 estimation_err_var = 0
 # Limits to variation of times
 upper_var_limit = 0.5 # Percentage out of corresponding total time
 lower_var_limit = 0.5 # Percentage out of corresponding total time
+
+# Define the cores' queue limit time and reservation amount
+time_limit = 200
+reserv_limit = 25
 
 ## Precalculated routes
 
