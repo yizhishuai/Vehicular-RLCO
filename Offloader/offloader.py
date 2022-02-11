@@ -20,22 +20,8 @@ optimal_reward = 0 # Optimal reward of offloader
 
 ### - Computation offloading agents with ChainerRL - ###
 
-if(__name__ == '__main__'):
-    ## Environment (using gym)
-    # Checking if the environment is already registered is necesary for
-    # subsecuent executions
-    env_dict = gym.envs.registration.registry.env_specs.copy()
-    for env in env_dict:
-        if 'offload' in env:
-            print('Remove {} from registry'.format(env))
-            del gym.envs.registration.registry.env_specs[env]
-    del env_dict
-    
-    env = gym.make('offloading_net:offload-v0')
-    env = chainerrl.wrappers.CastObservationToFloat32(env)
-
 # Function used to get training data on a specific scenario
-def train_scenario(env):
+def define_scenario(env):
     
     # Environment parameters required for training/testing
     n_actions = env.action_space.n
@@ -57,7 +43,7 @@ def train_scenario(env):
     gammas = 0.995
     
     # Algorithms to be used
-    alg = ['DDQN','TRPO']
+    alg = ['DDQN']
     
     # Explorations that are to be analized (in algorithms that use them)
     explorators = 'const'
@@ -100,6 +86,10 @@ def train_scenario(env):
     agents = make_training_agents(
             env, gammas, explorators, epsilons, alg, repetitions)
     
+    return agents
+
+def train_scenario(env, agents):
+    
     # Training
     """
     The training environment consists of a network with four types of nodes
@@ -117,7 +107,7 @@ def train_scenario(env):
     print('---TRAINING---')
     # Number of time steps to archive a stationary state in the network
     start_up = 1000
-    n_time_steps = 210000 # For 10^-3 precision -> ~10^5 sample points
+    n_time_steps = 110000 # For 10^-3 precision -> ~10^5 sample points
     # Number of last episodes to use for average reward calculation
     averaging_window = 10000
     x_axis = range(1, start_up+n_time_steps+1) # X axis for ploting results
@@ -238,6 +228,16 @@ def train_scenario(env):
               's', sep='')
     print('NOTE: The training time takes into account some data collecting!')
     
+    return {'train_avg_total_times': average_total_training_times,
+            'train_avg_agent_times': average_agent_training_times,
+            'agents': agents}
+
+def test_scenario(env, agents):
+    
+    # Environment parameters required for testing
+    n_apps = len(env.traffic_generator.apps)
+    n_nodes = len(env.node_type)
+    
     # Testing
     # Testing average of successfully processed application for each batch
     test_success_rate = []
@@ -248,7 +248,9 @@ def train_scenario(env):
     # Testing total delays of each petition per application
     test_app_delays = []
     print('\n---TESTING---')
-    n_time_steps = 100000
+    # Number of time steps to archive a stationary state in the network
+    start_up = 1000
+    n_time_steps = 10000 # For 10^-3 precision -> ~10^5 sample points
     for batch in range(len(agents)):
         batch_success_rate = []
         batch_act_distribution = []
@@ -379,10 +381,23 @@ def train_scenario(env):
             max_delay = env.traffic_generator.app_max_delay[i]
             makeFigureHistSubplot(y_axis, bins, labels, legend, max_delay)
     
-    return {'train_avg_total_times': average_total_training_times,
-            'train_avg_agent_times': average_agent_training_times,
-            'test_success_rate': test_success_rate, 'agents': agents}
+    return {'test_success_rate': test_success_rate}
 
 if(__name__ == "__main__"):
-    train_scenario(env)
+    ## Environment (using gym)
+    # Checking if the environment is already registered is necesary for
+    # subsecuent executions
+    env_dict = gym.envs.registration.registry.env_specs.copy()
+    for env in env_dict:
+        if 'offload' in env:
+            print('Remove {} from registry'.format(env))
+            del gym.envs.registration.registry.env_specs[env]
+    del env_dict
+    
+    env = gym.make('offloading_net:offload-v0')
+    env = chainerrl.wrappers.CastObservationToFloat32(env)
+    
+    agents = define_scenario(env)
+    train_scenario(env, agents)
+    test_scenario(env, agents)
 

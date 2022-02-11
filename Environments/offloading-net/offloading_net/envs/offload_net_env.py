@@ -318,4 +318,7 @@ class offload_netEnv(gym.Env):
     
     def set_total_vehicles(self, total_vehicles):
         self.n_vehicles = total_vehicles
+    
+    def set_error_var(self, error_var):
+        self.core_manager.error_var = error_var
 
