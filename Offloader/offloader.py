@@ -13,6 +13,7 @@ import numpy as np
 from operator import add
 
 from agent_creator import make_training_agents
+from heuristic_algorithms import make_heuristic_agents
 from graph_creator import (makeFigurePlot, makeFigureHistSingle,
                            makeFigureHistSubplot)
 
@@ -22,11 +23,6 @@ optimal_reward = 0 # Optimal reward of offloader
 
 # Function used to get training data on a specific scenario
 def define_scenario(env):
-    
-    # Environment parameters required for training/testing
-    n_actions = env.action_space.n
-    n_apps = len(env.traffic_generator.apps)
-    n_nodes = len(env.node_type)
     
     ## - To define the agent & training, will use ChainerRL - ##
     
@@ -85,6 +81,12 @@ def define_scenario(env):
     """
     agents = make_training_agents(
             env, gammas, explorators, epsilons, alg, repetitions)
+    
+    # Add agents imitating shortest paths algorithms to the training for
+    # benchmarks
+    heuristic_agents = make_heuristic_agents(env)
+    for i in range(len(heuristic_agents)):
+        agents.insert(0, [heuristic_agents[i]])
     
     return agents
 
@@ -229,8 +231,7 @@ def train_scenario(env, agents):
     print('NOTE: The training time takes into account some data collecting!')
     
     return {'train_avg_total_times': average_total_training_times,
-            'train_avg_agent_times': average_agent_training_times,
-            'agents': agents}
+            'train_avg_agent_times': average_agent_training_times}
 
 def test_scenario(env, agents):
     
@@ -331,6 +332,7 @@ def test_scenario(env, agents):
                   sep='')
             print('   -Processed application rate:')
             print('   |-> Apps: ', str(env.traffic_generator.apps), sep='')
+            print('   |-> Num.: ', str(batch_app_processed[a]), sep='')
             print('   |-> Rate: ', str(list(
                 np.divide(batch_app_processed[a], batch_app_count[a]))),
                 sep='')
