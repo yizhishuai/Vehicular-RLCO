@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Nov  13 16:44:00 2021
+Created on Sat Nov 13 16:44:00 2021
 
 @author: Mieszko Ferens
 """
@@ -320,5 +320,5 @@ class offload_netEnv(gym.Env):
         self.n_vehicles = total_vehicles
     
     def set_error_var(self, error_var):
-        self.core_manager.error_var = error_var
+        self.core_manager.set_error_var(error_var)
 

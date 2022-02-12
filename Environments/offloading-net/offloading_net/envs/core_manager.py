@@ -317,6 +317,9 @@ class core_manager():
     
     def reset(self, n_nodes, node_cores, node_vehicles, node_type):
         
+        print("Env error value:")
+        print(self.error_var)
+        
         # Store the amount of non-vehicle nodes that will be managed
         self.net_nodes = n_nodes - node_type.count(4) - 1
         
@@ -464,5 +467,8 @@ class core_manager():
                 if(i > self.reserv_limit):
                     raise KeyboardInterrupt(
                         "Trouble while updating a core queue!")
+    
+    def set_error_var(self, error_var):
+        self.error_var = error_var
     
     

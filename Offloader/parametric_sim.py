@@ -26,8 +26,8 @@ def parametric_sim_vehicles_train_per_test(env, topology, n_vehicles):
     # Parameter error
     if(not isinstance(n_vehicles, list)):
         raise KeyboardInterrupt("The vehicle variation for the simulation must"
-                                " be defined as a list. TIP: Check the passed "
-                                "parameter.")
+                                " be defined as a list.\nTIP: Check the passed"
+                                " parameter.")
     
     ## Run simulations with varying network load, training the agents for each
     ## network scenario
@@ -37,17 +37,15 @@ def parametric_sim_vehicles_train_per_test(env, topology, n_vehicles):
     train_avg_agent_times = []
     test_success_rate = []
     
-    # Get base agents
-    agents = define_scenario(env)
     # Train and test the agents
     for i in range(len(n_vehicles)):
         # Vary network load parameters
         env.set_total_vehicles(n_vehicles[i])
         
         # Get metrics of trained and tested agents
+        agents = define_scenario(env) # Get base agents
         train_results = train_scenario(env, agents)
-        trained_agents = train_results['agents'] # Get trained agents
-        test_results = test_scenario(env, trained_agents)
+        test_results = test_scenario(env, agents)
         train_avg_total_times.append(train_results['train_avg_total_times'])
         train_avg_agent_times.append(train_results['train_avg_agent_times'])
         test_success_rate.append(test_results['test_success_rate'])
@@ -55,6 +53,10 @@ def parametric_sim_vehicles_train_per_test(env, topology, n_vehicles):
     ## Plot results
     
     # Reshape data to plot with makeFigurePlot function
+    train_avg_total_times = reshape_data(train_avg_total_times)
+    train_avg_agent_times = reshape_data(train_avg_agent_times)
+    test_success_rate = reshape_data(test_success_rate)
+    """
     temp1 = np.array(train_avg_total_times)
     temp2 = np.array(train_avg_agent_times)
     temp3 = np.array(test_success_rate)
@@ -67,6 +69,7 @@ def parametric_sim_vehicles_train_per_test(env, topology, n_vehicles):
         train_avg_agent_times.append(list(temp2[:,i]))
         test_success_rate.append(list(temp3[:,i]))
     del temp1, temp2, temp3
+    """
     
     # Plot graphs
     labels = ['Vehicles in network', 'Training average total times',
@@ -90,8 +93,6 @@ def parametric_sim_vehicles_train_per_test(env, topology, n_vehicles):
     plt.close('all') # Close all figures
     
     ## Log the data of the experiment in a file
-    
-    env.reset() # Reset the environment to get initial link capacities
     
     # Open log file
     try:
@@ -119,7 +120,7 @@ def parametric_sim_vehicles_train_per_test(env, topology, n_vehicles):
     
     log_file.write("---------------------------------------------------\n\n")
     # .csv
-    log_file.write("n_vehicles,")
+    log_file.write("n_vehicles")
     for a in range(len(agents)):
         for key in train_results.keys():
             if(key != 'agents'):
@@ -127,13 +128,137 @@ def parametric_sim_vehicles_train_per_test(env, topology, n_vehicles):
         for key in test_results.keys():
             log_file.write(',' + key + '-' + agents[a][0][1])
     for i in range(len(n_vehicles)):
-        log_file.write('\n' + str(n_vehicles[i]))
+        log_file.write('\n' + str(n_vehicles[i]) + ',')
         for a in range(len(agents)):
             log_file.write(str(train_avg_total_times[a][i]) + ',')
             log_file.write(str(train_avg_agent_times[a][i]) + ',')
             log_file.write(str(test_success_rate[a][i]) + ',')
     
     log_file.close() # Close log file
+
+def parametric_sim_errorVar_train_per_test(env, topology, estimation_err_var):
+    
+    # Parameter error
+    if(not isinstance(estimation_err_var, list)):
+        raise KeyboardInterrupt("The estimation error variance variation for "
+                                "the simulation must be defined as a list.\n"
+                                "TIP: Check the passed parameter.")
+    
+    ## Run simulations with varying network load, training the agents for each
+    ## network scenario
+    
+    # Metrics
+    train_avg_total_times = []
+    train_avg_agent_times = []
+    test_success_rate = []
+    
+    # Train and test the agents
+    for i in range(len(estimation_err_var)):
+        # Vary network load parameters
+        env.set_error_var(estimation_err_var[i])
+        
+        # Get metrics of trained and tested agents
+        agents = define_scenario(env) # Get base agents
+        train_results = train_scenario(env, agents)
+        test_results = test_scenario(env, agents)
+        train_avg_total_times.append(train_results['train_avg_total_times'])
+        train_avg_agent_times.append(train_results['train_avg_agent_times'])
+        test_success_rate.append(test_results['test_success_rate'])
+    
+    ## Plot results
+    
+    # Reshape data to plot with makeFigurePlot function
+    train_avg_total_times = reshape_data(train_avg_total_times)
+    train_avg_agent_times = reshape_data(train_avg_agent_times)
+    test_success_rate = reshape_data(test_success_rate)
+    """
+    temp1 = np.array(train_avg_total_times)
+    temp2 = np.array(train_avg_agent_times)
+    temp3 = np.array(test_success_rate)
+    n_plots = len(test_success_rate[0])
+    train_avg_total_times.clear()
+    train_avg_agent_times.clear()
+    test_success_rate.clear()
+    for i in range(n_plots):
+        train_avg_total_times.append(list(temp1[:,i]))
+        train_avg_agent_times.append(list(temp2[:,i]))
+        test_success_rate.append(list(temp3[:,i]))
+    del temp1, temp2, temp3
+    """
+    
+    # Plot graphs
+    labels = ['Processing time error variance', 'Training average total times',
+              topology]
+    legend = []
+    for a in range(len(agents)):
+        legend.append(agents[a][0][1])
+        
+    makeFigurePlot(estimation_err_var, train_avg_total_times, labels=labels,
+                   legend=legend)
+    plt.savefig('Figures/' + labels[1] + '.svg')
+    labels[1] = 'Training average agent processing times'
+    makeFigurePlot(estimation_err_var, train_avg_agent_times, labels=labels,
+                   legend=legend)
+    plt.savefig('Figures/' + labels[1] + '.svg')
+    labels[1] = 'Testing success rate'
+    makeFigurePlot(estimation_err_var, test_success_rate, labels=labels,
+                   legend=legend)
+    plt.savefig('Figures/' + labels[1] + '.svg')
+    
+    plt.close('all') # Close all figures
+    
+    ## Log the data of the experiment in a file
+    
+    # Open log file
+    try:
+        log_file = open("TestLog_" + str(date.today()) + '.txt', 'wt',
+                        encoding='utf-8')
+    except:
+        raise KeyboardInterrupt('Error while initializing log file...aborting')
+    
+    # Initial information
+    log_file.write("Experiment Log - " + str(datetime.today()) + '\n\n')
+    log_file.write("Network topology: " + topology + '\n')
+    
+    log_file.write("---------------------------------------------------\n\n")
+    
+    # Data
+    log_file.write('estimation_err_var = ' + str(estimation_err_var) + '\n')
+    for a in range(len(agents)):
+        log_file.write("\n---" + agents[a][0][1] + '\n')
+        log_file.write("-Training average total times:\n" +
+                       str(train_avg_total_times[a]) + '\n')
+        log_file.write("-Training average agent processing times:\n" +
+                       str(train_avg_agent_times[a]) + '\n')
+        log_file.write("-Test success rate:\n" + str(test_success_rate[a]) +
+                       '\n')
+    
+    log_file.write("---------------------------------------------------\n\n")
+    # .csv
+    log_file.write("estimation_err_var")
+    for a in range(len(agents)):
+        for key in train_results.keys():
+            if(key != 'agents'):
+                log_file.write(',' + key + '-' + agents[a][0][1])
+        for key in test_results.keys():
+            log_file.write(',' + key + '-' + agents[a][0][1])
+    for i in range(len(estimation_err_var)):
+        log_file.write('\n' + str(estimation_err_var[i]) + ',')
+        for a in range(len(agents)):
+            log_file.write(str(train_avg_total_times[a][i]) + ',')
+            log_file.write(str(train_avg_agent_times[a][i]) + ',')
+            log_file.write(str(test_success_rate[a][i]) + ',')
+    
+    log_file.close() # Close log file
+
+# Funtion for reshaping the parametric simulation's results
+def reshape_data(data):
+    temp = np.array(data)
+    reshaped_data = []
+    for i in range(len(data[0])):
+        reshaped_data.append(list(temp[:,i]))
+    
+    return reshaped_data
 
 if(__name__ == "__main__"):
     
@@ -176,9 +301,12 @@ if(__name__ == "__main__"):
     
     # Simulation parameters
     n_vehicles = [10, 30, 50, 70, 90]
-    estimation_err_var = 0
+    estimation_err_var = [0, 1, 2, 3, 4]
     
-    # Run simulation
+    # Run simulations # TODO
     parametric_sim_vehicles_train_per_test(
         env, topology_labels[top_index], n_vehicles)
+    
+    #parametric_sim_errorVar_train_per_test(
+    #    env, topology_labels[top_index], estimation_err_var)
 
