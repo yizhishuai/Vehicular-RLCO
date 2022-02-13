@@ -5,15 +5,14 @@ Created on Saturday Feb 12 11:08:57 2022
 @author: Mieszko Ferens
 """
 
-import random.randint
+from random import randint
 
 ### Heuristic algorithms for load distributions
 
-# TODO
 """
-These classes implement the shortest path algorithm and k-shortest paths
-algorithm for comparison with RL agents. They are designed to work in the
-environments that tested RL agents are going to be working in.
+These classes implement the heuristic algorithms for comparison with RL agents.
+They are designed to work in the environments that tested RL agents are going
+to be working in.
 """
 
 class local_processing_agent:
@@ -61,11 +60,11 @@ class uniform_distribution_agent:
     
     def act_and_train(self, obs, reward):
         # Input parameters are ignored since this is not a RL agent
-        return random.randint(0, self.last_action)
+        return randint(0, self.last_action)
     
     def act(self, obs):
         # Input parameter is ignored since this is not a RL agent
-        return random.randint(0, self.last_action)
+        return randint(0, self.last_action)
 
 class max_distance_agent:
     
@@ -77,16 +76,33 @@ class max_distance_agent:
     first to the closest, i.e. cloud -> MECs -> RSUs -> local vehicle).
     It doesn't take into account the current load of the nodes.
     """
-    def __init__(self, n_actions):
-        self.action = n_actions-1
+    def __init__(self, env):
+        self.n_actions = env.action_space.n
+        self.env = env
     
     def act_and_train(self, obs, reward):
         # Input parameters are ignored since this is not a RL agent
-        return self.action
+        # Check starting from the furthest nodes (lowest actions) whether the
+        # estimated delay is under the max tolerable delay
+        for i in range(self.n_actions):
+            path = self.env.get_path(i) # Get path
+            # Check if delay is acceptable
+            if(sum(self.env.calc_delays(i, path)) <= self.env.app_max_delay):
+                break
+        # Return first acceptable action
+        return i
     
     def act(self, obs):
         # Input parameter is ignored since this is not a RL agent
-        return self.action
+        # Check starting from the furthest nodes (lowest actions) whether the
+        # estimated delay is under the max tolerable delay
+        for i in range(self.n_actions):
+            path = self.env.get_path(i) # Get path
+            # Check if delay is acceptable
+            if(sum(self.env.calc_delays(i, path)) <= self.env.app_max_delay):
+                break
+        # Return first acceptable action
+        return i
 
 # Funtion that instances shortest path algorithms imitating RL agents
 def make_heuristic_agents(env):
@@ -100,10 +116,11 @@ def make_heuristic_agents(env):
     agent_uniform_distribution = uniform_distribution_agent(env.action_space.n)
     uniform_distribution_info = 'Uniform distribution of load'
     
-    #agent_max_distance = max_distance_agent(env.action_space.n)
-    #max_distance_info = 'Max distance processing'
+    agent_max_distance = max_distance_agent(env)
+    max_distance_info = 'Max distance processing'
     
     return [[agent_local_processing, local_processing_info],
             [agent_cloud_processing, cloud_processing_info],
-            [agent_uniform_distribution, uniform_distribution_info]]
+            [agent_uniform_distribution, uniform_distribution_info],
+            [agent_max_distance, max_distance_info]]
 

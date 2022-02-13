@@ -80,15 +80,15 @@ def parametric_sim_vehicles_train_per_test(env, topology, n_vehicles):
         
     makeFigurePlot(
         n_vehicles, train_avg_total_times, labels=labels, legend=legend)
-    plt.savefig('Figures/' + labels[1] + '.svg')
+    plt.savefig('Results/VehicleVar/TrainPerTest/' + labels[1] + '.svg')
     labels[1] = 'Training average agent processing times'
     makeFigurePlot(
         n_vehicles, train_avg_agent_times, labels=labels, legend=legend)
-    plt.savefig('Figures/' + labels[1] + '.svg')
+    plt.savefig('Results/VehicleVar/TrainPerTest/' + labels[1] + '.svg')
     labels[1] = 'Testing success rate'
     makeFigurePlot(
         n_vehicles, test_success_rate, labels=labels, legend=legend)
-    plt.savefig('Figures/' + labels[1] + '.svg')
+    plt.savefig('Results/VehicleVar/TrainPerTest/' + labels[1] + '.svg')
     
     plt.close('all') # Close all figures
     
@@ -96,8 +96,8 @@ def parametric_sim_vehicles_train_per_test(env, topology, n_vehicles):
     
     # Open log file
     try:
-        log_file = open("TestLog_" + str(date.today()) + '.txt', 'wt',
-                        encoding='utf-8')
+        log_file = open("Results/VehicleVar/TrainPerTest/TestLog_" +
+                        str(date.today()) + '.txt', 'wt', encoding='utf-8')
     except:
         raise KeyboardInterrupt('Error while initializing log file...aborting')
     
@@ -195,15 +195,15 @@ def parametric_sim_errorVar_train_per_test(env, topology, estimation_err_var):
         
     makeFigurePlot(estimation_err_var, train_avg_total_times, labels=labels,
                    legend=legend)
-    plt.savefig('Figures/' + labels[1] + '.svg')
+    plt.savefig('Results/ErrorVar/TrainPerTest/' + labels[1] + '.svg')
     labels[1] = 'Training average agent processing times'
     makeFigurePlot(estimation_err_var, train_avg_agent_times, labels=labels,
                    legend=legend)
-    plt.savefig('Figures/' + labels[1] + '.svg')
+    plt.savefig('Results/ErrorVar/TrainPerTest/' + labels[1] + '.svg')
     labels[1] = 'Testing success rate'
     makeFigurePlot(estimation_err_var, test_success_rate, labels=labels,
                    legend=legend)
-    plt.savefig('Figures/' + labels[1] + '.svg')
+    plt.savefig('Results/ErrorVar/TrainPerTest/' + labels[1] + '.svg')
     
     plt.close('all') # Close all figures
     
@@ -211,8 +211,8 @@ def parametric_sim_errorVar_train_per_test(env, topology, estimation_err_var):
     
     # Open log file
     try:
-        log_file = open("TestLog_" + str(date.today()) + '.txt', 'wt',
-                        encoding='utf-8')
+        log_file = open("Results/ErrorVar/TrainPerTest/TestLog_" +
+                        str(date.today()) + '.txt', 'wt', encoding='utf-8')
     except:
         raise KeyboardInterrupt('Error while initializing log file...aborting')
     
@@ -300,13 +300,13 @@ if(__name__ == "__main__"):
         os.remove(path_to_env + "net_topology")
     
     # Simulation parameters
-    n_vehicles = [10, 30, 50, 70, 90]
-    estimation_err_var = [0, 1, 2, 3, 4]
+    n_vehicles = [10, 30, 50]
+    estimation_err_var = [0, 2, 4]
     
-    # Run simulations # TODO
+    # Run simulations
     parametric_sim_vehicles_train_per_test(
         env, topology_labels[top_index], n_vehicles)
     
-    #parametric_sim_errorVar_train_per_test(
-    #    env, topology_labels[top_index], estimation_err_var)
+    parametric_sim_errorVar_train_per_test(
+        env, topology_labels[top_index], estimation_err_var)
 

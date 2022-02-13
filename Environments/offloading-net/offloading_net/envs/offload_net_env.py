@@ -64,6 +64,9 @@ class offload_netEnv(gym.Env):
         # Node type list (used as information for metrics during testing)
         self.node_type = node_type
         
+        # Node combination list (used as information for heuristic algorithms)
+        self.node_comb = node_comb
+        
         # Links bitrate (in case it needs to be modified during the simulation)
         self.links_rate = links_rate
         
@@ -137,44 +140,18 @@ class offload_netEnv(gym.Env):
 
     def step(self, action):
         
-        # For each application, the node that processes it cannot be another
-        # vehicle, but the local vehicle (the one that generates the petition)
-        # can
-        # Translate the action to the correct node number if the agent decides
-        # to processes the application locally
-        if(action == net_nodes):
-            action = self.app_origin - 1
-            path = []
-        # Prepare path between origin node and the selected processor
-        else:
-            current_nodes = [self.app_origin, action + 1]
-            current_nodes.sort()
-            path = all_paths[node_comb.index(current_nodes)]
+        # For each application, the node that processes it cannot be a vehicle
+        # other than the local vehicle (the one that generates the petition)
+        
+        # Get path between nodes corresponding to the action of the agent
+        path = self.get_path(action)
         
         # For each action one node for processing an application is chosen,
         # reserving one of its cores (might queue)
         
-        # Calculate the transmission delay for the application's data (in ms)
-        forward_delay = 0
-        return_delay = 0
-        if path:
-            for a in range(len(path)-1):
-                link = [path[a], path[a+1]]
-                link.sort()
-                link_index = links.index(link)
-                link_rate = self.links_rate[link_index] # in kbit/s
-                link_delay = links_delay[link_index] # in ms
-                
-                forward_delay += (self.app_data_in/link_rate)*1000 + link_delay
-                return_delay += link_delay + (self.app_data_out/link_rate)*1000
-        
-        # Calculate the processing delay at the node (in ms)
-        proc_delay = (self.app_data_in*self.app_cost/node_clock[action])*1000
-        
-        # Limit the precision of the numbers to prevent overflow
-        forward_delay = np.around(forward_delay, self.precision_limit)
-        return_delay = np.around(return_delay, self.precision_limit)
-        proc_delay = np.around(proc_delay, self.precision_limit)
+        # Calculate the associated delays (transmission and processing) without
+        # accounting for queueing
+        forward_delay, return_delay, proc_delay = self.calc_delays(action,path)
         
         # Choose the next as soon to be available core from the selected
         # processing node and reserve its core for the required time
@@ -315,6 +292,45 @@ class offload_netEnv(gym.Env):
         print('Core reservation time:', self.obs[0:self.n_cores])
         # Print next application to be processed
         print('Next application:', self.app)
+    
+    def get_path(self, action):
+        # Translate the action to the correct node number if the agent decides
+        # to process the application locally
+        if(action == net_nodes):
+            action = self.app_origin - 1
+            path = []
+        # Prepare path between origin node and the selected processor
+        else:
+            current_nodes = [self.app_origin, action + 1]
+            current_nodes.sort()
+            path = all_paths[node_comb.index(current_nodes)]
+        
+        return path
+    
+    def calc_delays(self, action, path):
+        # Calculate the transmission delay for the application's data (in ms)
+        forward_delay = 0
+        return_delay = 0
+        if path:
+            for a in range(len(path)-1):
+                link = [path[a], path[a+1]]
+                link.sort()
+                link_index = links.index(link)
+                link_rate = self.links_rate[link_index] # in kbit/s
+                link_delay = links_delay[link_index] # in ms
+                
+                forward_delay += (self.app_data_in/link_rate)*1000 + link_delay
+                return_delay += link_delay + (self.app_data_out/link_rate)*1000
+        
+        # Calculate the processing delay at the node (in ms)
+        proc_delay = (self.app_data_in*self.app_cost/node_clock[action])*1000
+        
+        # Limit the precision of the numbers to prevent overflow
+        forward_delay = np.around(forward_delay, self.precision_limit)
+        return_delay = np.around(return_delay, self.precision_limit)
+        proc_delay = np.around(proc_delay, self.precision_limit)
+        
+        return forward_delay, return_delay, proc_delay
     
     def set_total_vehicles(self, total_vehicles):
         self.n_vehicles = total_vehicles
