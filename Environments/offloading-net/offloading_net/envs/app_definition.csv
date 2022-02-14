@@ -1,7 +1,7 @@
 app,cost,data_in,data_out,max_delay,rate,info
-1,1,3600,1000,120,100,Tele-Operated Driving (normal)
-2,1,36000,1000,10,15000,Tele-Operated Driving (strict)
-3,1,47000,4000,100,1000,High-Definition Map Collecting & Sharing
-4,1,1000,1000,200,10000,Bus Lane Sharing Request
-5,1,9000,64,150,1000,Patient Transport Monitoring
-6,1,5000,5000,20,1000,In-Vehicle Entertainment
+1,1,360,100,120,10,Tele-Operated Driving (normal)
+2,1,3600,100,10,1500,Tele-Operated Driving (strict)
+3,1,4700,400,100,100,High-Definition Map Collecting & Sharing
+4,1,100,100,200,1000,Bus Lane Sharing Request
+5,1,900,64,150,100,Patient Transport Monitoring
+6,1,500,500,20,100,In-Vehicle Entertainment

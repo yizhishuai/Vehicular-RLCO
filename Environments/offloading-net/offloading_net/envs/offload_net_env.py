@@ -245,6 +245,7 @@ class offload_netEnv(gym.Env):
         # nearest integer) - Even distribution
         self.node_vehicles = round(self.n_vehicles/self.node_type.count(4))
         
+        """
         # Override the bitrate of the shared wireless links between RSUs (type
         # 3 nodes) with vehicles (type 4 nodes) using an approximation
         # Find vehicle nodes and non-vehicle nodes
@@ -261,6 +262,7 @@ class offload_netEnv(gym.Env):
                 # Worst case scenario (with limit)
                 self.links_rate[links.index(i)] = (
                     links_rate[links.index(i)]/5)
+        """
         
         # Reset and create all cores
         self.core_manager.reset(n_nodes, node_cores, self.node_vehicles,
