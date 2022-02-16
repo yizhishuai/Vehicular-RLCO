@@ -21,75 +21,6 @@ optimal_reward = 0 # Optimal reward of offloader
 
 ### - Computation offloading agents with ChainerRL - ###
 
-# Function used to get training data on a specific scenario
-def define_scenario(env):
-    
-    ## - To define the agent & training, will use ChainerRL - ##
-    
-    """
-    To create various agent and compare them, many of the objects that the
-    agent requieres have to be instanced multiple times. If not, they will
-    share instances of certain objects and training will be biased.
-    
-    Also note that for comparing average Q values, gamma should be equal for
-    all agents because this parameter influences their calculation.
-    """
-    
-    # Discount factors
-    gammas = 0.995
-    
-    # Algorithms to be used
-    alg = ['DDQN','TRPO']
-    
-    # Explorations that are to be analized (in algorithms that use them)
-    explorators = 'const'
-    epsilons = 0.2
-    
-    repetitions = 1
-    
-    """
-    This function returns a list of lists. Each of the lists represents a type
-    of agent and contains as many as repetitions declares (default is 1). Each
-    of the internal lists contains turples that each contain all necesary
-    objects for an agent to be trained.
-    In the turples index 0 is the agent and index 1 is the info, the other
-    indexes don't need to be accesed.
-    Parameters:
-        env: gym environment
-        gammas: Discount factors to be used; you may define only one
-        explorators: Exploration types to be used; you may define only one per
-                     agent (constant, linear)
-        epsilons: Epsilon values to be used; you may define only one per agent
-        repetitions: How many replicas of a type of agent are to be created
-                     (default is 1)
-        alg: The algorithm of the agent; some of the other parameters don't
-             matter depending on what algorithm is picked (DDQN, TRPO, SARSA,
-             PAL) 
-        NOTE 1: If you define multiple values for a parameter, you can only
-                define one of the other if it is to be the same for all agent
-                types
-                Example 1: gammas = 0.7, alg = 'DDQN', explorators = 'const',
-                           epsilons = [0.1, 0.2], repetitions = [2, 3]
-                Example 2: gammas = [0.1, 0.5], alg = ['DDQN', 'SARSA'],
-                           explorators = ['const', 'linear'],
-                           epsilons = [0.2, [0.4,0.05,5000]], repetitions = 3
-                Multiple value parameters are gammas, explorators, epsilons and
-                repetitions
-        NOTE 2: For algorithms with policy instead of a Q-function, explorators
-                and epsilons parameters are unused (but need a value!)
-                Algorithms with policy include: TRPO
-    """
-    agents = make_training_agents(
-            env, gammas, explorators, epsilons, alg, repetitions)
-    
-    # Add agents imitating shortest paths algorithms to the training for
-    # benchmarks
-    heuristic_agents = make_heuristic_agents(env)
-    for i in range(len(heuristic_agents)):
-        agents.insert(0, [heuristic_agents[i]])
-    
-    return agents
-
 def train_scenario(env, agents):
     
     # Training
@@ -399,7 +330,33 @@ if(__name__ == "__main__"):
     env = gym.make('offloading_net:offload-v0')
     env = chainerrl.wrappers.CastObservationToFloat32(env)
     
-    agents = define_scenario(env)
+    ## Agents (using ChainerRL)
+    # Discount factors
+    # Note that for comparing average Q values, gamma should be equal for
+    # all agents because this parameter influences their calculation.
+    gammas = 0.995
+    
+    # Algorithms to be used
+    alg = ['DDQN','TRPO']
+    
+    # Explorations that are to be analized (in algorithms that use them)
+    explorators = 'const'
+    epsilons = 0.2
+    
+    # Define the number of replicas
+    repetitions = 1
+    
+    # Create agents
+    agents = make_training_agents(
+            env, gammas, explorators, epsilons, alg, repetitions)
+    
+    # Add heuristic algorithims imitating RL agents to the training for
+    # benchmarks
+    heuristic_agents = make_heuristic_agents(env)
+    for i in range(len(heuristic_agents)):
+        agents.insert(0, [heuristic_agents[i]])
+    
+    ## Train and test
     train_scenario(env, agents)
     test_scenario(env, agents)
 

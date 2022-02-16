@@ -10,7 +10,6 @@ Created on Sat Nov 13 16:44:00 2021
 import numpy as np
 import gym
 from gym import spaces
-from itertools import product
 
 from .traffic_generator import traffic_generator
 from .core_manager import core_manager
@@ -244,25 +243,6 @@ class offload_netEnv(gym.Env):
         # Define the number of vehicles per vehicle node (rounded to the
         # nearest integer) - Even distribution
         self.node_vehicles = round(self.n_vehicles/self.node_type.count(4))
-        
-        """
-        # Override the bitrate of the shared wireless links between RSUs (type
-        # 3 nodes) with vehicles (type 4 nodes) using an approximation
-        # Find vehicle nodes and non-vehicle nodes
-        RSUs = [node+1 for node, n_type in enumerate(node_type) if n_type == 3]
-        vehicles = (
-            [node+1 for node, n_type in enumerate(node_type) if n_type == 4])
-        # Calculate all possible combinations
-        shared = product(RSUs, vehicles)
-        shared = list(map(lambda x : list(x), node_comb))
-        # Update the only the existings links
-        for i in shared:
-            i.sort()
-            if(i in links):
-                # Worst case scenario (with limit)
-                self.links_rate[links.index(i)] = (
-                    links_rate[links.index(i)]/5)
-        """
         
         # Reset and create all cores
         self.core_manager.reset(n_nodes, node_cores, self.node_vehicles,

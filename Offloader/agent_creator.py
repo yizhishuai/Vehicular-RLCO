@@ -203,6 +203,39 @@ def create_agents(
 def make_training_agents(
         env, gammas, exp_types, epsilons, alg, repetitions=1):
     
+    """
+    This function returns a list of lists. Each of the lists represents a type
+    of agent and contains as many as repetitions declares (default is 1). Each
+    of the internal lists contains turples that each contain all necesary
+    objects for an agent to be trained.
+    In the turples index 0 is the agent and index 1 is the info, the other
+    indexes don't need to be accesed.
+    Parameters:
+        env: gym environment
+        gammas: Discount factors to be used; you may define only one
+        explorators: Exploration types to be used; you may define only one per
+                     agent (constant, linear)
+        epsilons: Epsilon values to be used; you may define only one per agent
+        repetitions: How many replicas of a type of agent are to be created
+                     (default is 1)
+        alg: The algorithm of the agent; some of the other parameters don't
+             matter depending on what algorithm is picked (DDQN, TRPO, SARSA,
+             PAL) 
+        NOTE 1: If you define multiple values for a parameter, you can only
+                define one of the other if it is to be the same for all agent
+                types
+                Example 1: gammas = 0.7, alg = 'DDQN', explorators = 'const',
+                           epsilons = [0.1, 0.2], repetitions = [2, 3]
+                Example 2: gammas = [0.1, 0.5], alg = ['DDQN', 'SARSA'],
+                           explorators = ['const', 'linear'],
+                           epsilons = [0.2, [0.4,0.05,5000]], repetitions = 3
+                Multiple value parameters are gammas, explorators, epsilons and
+                repetitions
+        NOTE 2: For algorithms with policy instead of a Q-function, explorators
+                and epsilons parameters are unused (but need a value!)
+                Algorithms with policy include: TRPO
+    """
+    
     # If there are multiple algorithms process is repeated for each one
     if(type(alg) != list and type(alg) == str):
         alg = [alg]
@@ -296,6 +329,12 @@ def make_training_agents(
                     temp.append(gammas)
                 gammas = temp
             
+            """
+            To create various agent and compare them, many of the objects that
+            the agent requires have to be instanced multiple times. If not,
+            they will share instances of certain objects and training will be
+            biased.
+            """
             for i in range(agent_num):
                 """
                 Create one list of turples, each turple contains data on an
@@ -348,6 +387,12 @@ def make_training_agents(
                     temp.append(gammas)
                 gammas = temp
             
+            """
+            To create various agent and compare them, many of the objects that
+            the agent requires have to be instanced multiple times. If not,
+            they will share instances of certain objects and training will be
+            biased.
+            """
             for i in range(agent_num):
                 """
                 Create one list of turples, each turple contains data on an
@@ -400,6 +445,12 @@ def make_training_agents(
                     temp.append(repetitions)
                 repetitions = temp
             
+            """
+            To create various agent and compare them, many of the objects that
+            the agent requires have to be instanced multiple times. If not,
+            they will share instances of certain objects and training will be
+            biased.
+            """
             for i in range(agent_num):
                 """
                 Create one list of turples, each turple contains data on an

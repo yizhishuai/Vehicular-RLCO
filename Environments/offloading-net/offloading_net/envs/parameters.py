@@ -23,6 +23,8 @@ try:
 except:
     topology = 'network_branchless' # Default for single simulation testing
 
+print("Environment is being created for network topology: " + topology + "\n")
+
 # Links and bitrate/delay of each link (loaded from .csv)
 data = pd.read_csv(path_to_env + topology + '.csv')
 links = data[['original', 'connected']].values.tolist()
@@ -41,7 +43,7 @@ if(node_type.count(1) > 1):
         "Error in network definition: Only one cloud node is allowed!")
 
 # Get definided applications (loaded from .csv)
-data = pd.read_csv(path_to_env + 'app_definition.csv')
+data = pd.read_csv(path_to_env + topology + '_apps.csv')
 apps = data['app'].values.tolist()
 app_cost = data['cost'].values.tolist()
 app_data_in = data['data_in'].values.tolist()
@@ -65,8 +67,8 @@ upper_var_limit = 0.5 # Percentage out of corresponding total time
 lower_var_limit = 0.5 # Percentage out of corresponding total time
 
 # Define the cores' queue limit time and reservation amount
-time_limit = 100
-reserv_limit = 25
+time_limit = max(app_max_delay) # Memory in cores (buffer) -Over max is useless
+reserv_limit = 1000 # Simulator limit
 
 ## Precalculated routes
 
