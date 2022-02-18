@@ -18,7 +18,7 @@ from .parameters import (links, links_rate, links_delay, node_type, node_clock,
                          node_comb, apps, app_cost, app_data_in, app_data_out,
                          app_max_delay, app_rate, app_info, estimation_err_var,
                          upper_var_limit, lower_var_limit, time_limit,
-                         reserv_limit)
+                         reserv_limit, topology_label)
 
 """
 Explanation on implemented discrete event simulator:
@@ -59,6 +59,9 @@ class offload_netEnv(gym.Env):
         # Precision limit (in number of decimals) for numpy.float64 variables
         # used to avoid overflow when operating with times in the simulator
         self.precision_limit = 10 # Numpy.float64 has 15 decimals
+        
+        # Topology name (used as information for metrics for logging)
+        self.topology_label = topology_label
         
         # Node type list (used as information for metrics during testing)
         self.node_type = node_type

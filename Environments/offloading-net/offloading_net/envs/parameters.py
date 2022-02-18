@@ -15,6 +15,9 @@ path_to_env = '../Environments/offloading-net/offloading_net/envs/'
 
 ## Network topology
 
+topologies = ["network_branchless", "network_branchless_v2"]
+topology_labels = ["Branchless network", "Branchless network v2"]
+
 # Choose network topology
 try:
     state_file = open(path_to_env + "net_topology", "rt")
@@ -22,6 +25,8 @@ try:
     state_file.close()
 except:
     topology = 'network_branchless' # Default for single simulation testing
+
+topology_label = topology_labels[topologies.index(topology)]
 
 print("Environment is being created for network topology: " + topology + "\n")
 

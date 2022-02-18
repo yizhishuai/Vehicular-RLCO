@@ -17,6 +17,7 @@ import gym
 import chainerrl
 import matplotlib.pyplot as plt
 from datetime import date, datetime
+from pathlib import Path
 
 from offloader import train_scenario, test_scenario
 from agent_creator import make_training_agents
@@ -68,6 +69,10 @@ def parametric_sim_vehicles_train_per_test(
         train_avg_agent_times.append(train_results['train_avg_agent_times'])
         test_success_rate.append(test_results['test_success_rate'])
     
+    # Create the directory (if not created) where the data will be stored
+    results_path = "Results/VehicleVar/TrainPerTest/"
+    Path(results_path).mkdir(parents=True, exist_ok=True)
+    
     ## Plot results
     
     # Reshape data to plot with makeFigurePlot function
@@ -84,15 +89,15 @@ def parametric_sim_vehicles_train_per_test(
     
     makeFigurePlot(
         n_vehicles, train_avg_total_times, labels=labels, legend=legend)
-    plt.savefig('Results/VehicleVar/TrainPerTest/' + labels[1] + '.svg')
+    plt.savefig(results_path + labels[1] + '.svg')
     labels[1] = 'Training average agent processing times'
     makeFigurePlot(
         n_vehicles, train_avg_agent_times, labels=labels, legend=legend)
-    plt.savefig('Results/VehicleVar/TrainPerTest/' + labels[1] + '.svg')
+    plt.savefig(results_path + labels[1] + '.svg')
     labels[1] = 'Testing success rate'
     makeFigurePlot(
         n_vehicles, test_success_rate, labels=labels, legend=legend)
-    plt.savefig('Results/VehicleVar/TrainPerTest/' + labels[1] + '.svg')
+    plt.savefig(results_path + labels[1] + '.svg')
     
     plt.close('all') # Close all figures
     
@@ -100,8 +105,8 @@ def parametric_sim_vehicles_train_per_test(
     
     # Open log file
     try:
-        log_file = open("Results/VehicleVar/TrainPerTest/TestLog_" +
-                        str(date.today()) + '.txt', 'wt', encoding='utf-8')
+        log_file = open(results_path + "TestLog_" + str(date.today()) + '.txt',
+                        'wt', encoding='utf-8')
     except:
         raise KeyboardInterrupt('Error while initializing log file...aborting')
     
@@ -187,6 +192,10 @@ def parametric_sim_vehicles_train_once(
         # Get metrics of tested agents
         test_success_rate.append(test_results['test_success_rate'])
     
+    # Create the directory (if not created) where the data will be stored
+    results_path = "Results/Vehicles/TrainOnce/"
+    Path(results_path).mkdir(parents=True, exist_ok=True)
+    
     ## Plot results
     
     # Reshape data to plot with makeFigurePlot function
@@ -202,7 +211,7 @@ def parametric_sim_vehicles_train_once(
     
     makeFigurePlot(
         n_vehicles, test_success_rate, labels=labels, legend=legend)
-    plt.savefig('Results/VehicleVar/TrainOnce/' + labels[1] + '.svg')
+    plt.savefig(results_path + labels[1] + '.svg')
     
     plt.close('all') # Close all figures
     
@@ -210,8 +219,8 @@ def parametric_sim_vehicles_train_once(
     
     # Open log file
     try:
-        log_file = open("Results/VehicleVar/TrainOnce/TestLog_" +
-                        str(date.today()) + '.txt', 'wt', encoding='utf-8')
+        log_file = open(results_path + "TestLog_" + str(date.today()) + '.txt',
+                        'wt', encoding='utf-8')
     except:
         raise KeyboardInterrupt('Error while initializing log file...aborting')
     
@@ -288,6 +297,10 @@ def parametric_sim_errorVar_train_per_test(
         train_avg_agent_times.append(train_results['train_avg_agent_times'])
         test_success_rate.append(test_results['test_success_rate'])
     
+    # Create the directory (if not created) where the data will be stored
+    results_path = "Results/ErrorVar/TrainPerTest/"
+    Path(results_path).mkdir(parents=True, exist_ok=True)
+    
     ## Plot results
     
     # Reshape data to plot with makeFigurePlot function
@@ -304,15 +317,15 @@ def parametric_sim_errorVar_train_per_test(
     
     makeFigurePlot(estimation_err_var, train_avg_total_times, labels=labels,
                    legend=legend)
-    plt.savefig('Results/ErrorVar/TrainPerTest/' + labels[1] + '.svg')
+    plt.savefig(results_path + labels[1] + '.svg')
     labels[1] = 'Training average agent processing times'
     makeFigurePlot(estimation_err_var, train_avg_agent_times, labels=labels,
                    legend=legend)
-    plt.savefig('Results/ErrorVar/TrainPerTest/' + labels[1] + '.svg')
+    plt.savefig(results_path + labels[1] + '.svg')
     labels[1] = 'Testing success rate'
     makeFigurePlot(estimation_err_var, test_success_rate, labels=labels,
                    legend=legend)
-    plt.savefig('Results/ErrorVar/TrainPerTest/' + labels[1] + '.svg')
+    plt.savefig(results_path + labels[1] + '.svg')
     
     plt.close('all') # Close all figures
     
@@ -320,8 +333,8 @@ def parametric_sim_errorVar_train_per_test(
     
     # Open log file
     try:
-        log_file = open("Results/ErrorVar/TrainPerTest/TestLog_" +
-                        str(date.today()) + '.txt', 'wt', encoding='utf-8')
+        log_file = open(results_path + "TestLog_" + str(date.today()) + '.txt',
+                        'wt', encoding='utf-8')
     except:
         raise KeyboardInterrupt('Error while initializing log file...aborting')
     
@@ -407,6 +420,10 @@ def parametric_sim_errorVar_train_once(
         # Get metrics of tested agents
         test_success_rate.append(test_results['test_success_rate'])
     
+    # Create the directory (if not created) where the data will be stored
+    results_path = "Results/ErrorVar/TrainOnce/"
+    Path(results_path).mkdir(parents=True, exist_ok=True)
+    
     ## Plot results
     
     # Reshape data to plot with makeFigurePlot function
@@ -422,7 +439,7 @@ def parametric_sim_errorVar_train_once(
     
     makeFigurePlot(
         n_vehicles, test_success_rate, labels=labels, legend=legend)
-    plt.savefig('Results/ErrorVar/TrainOnce/' + labels[1] + '.svg')
+    plt.savefig(results_path + labels[1] + '.svg')
     
     plt.close('all') # Close all figures
     
@@ -430,8 +447,8 @@ def parametric_sim_errorVar_train_once(
     
     # Open log file
     try:
-        log_file = open("Results/ErrorVar/TrainOnce/TestLog_" +
-                        str(date.today()) + '.txt', 'wt', encoding='utf-8')
+        log_file = open(results_path + "TestLog_" + str(date.today()) + '.txt',
+                        'wt', encoding='utf-8')
     except:
         raise KeyboardInterrupt('Error while initializing log file...aborting')
     
@@ -536,21 +553,21 @@ if(__name__ == "__main__"):
     
     # Run simulations
     parametric_sim_vehicles_train_per_test(
-        env, topology_labels[top_index], n_vehicles, gammas=gammas, alg=alg,
+        env, env.topology_label, n_vehicles, gammas=gammas, alg=alg,
         explorators=explorators, epsilons=epsilons, repetitions=repetitions)
     
     parametric_sim_vehicles_train_once(
-        env, topology_labels[top_index], n_vehicles, train_vehicles,
-        gammas=gammas, alg=alg, explorators=explorators, epsilons=epsilons,
+        env, env.topology_label, n_vehicles, train_vehicles, gammas=gammas,
+        alg=alg, explorators=explorators, epsilons=epsilons,
         repetitions=repetitions)
     
     parametric_sim_errorVar_train_per_test(
-        env, topology_labels[top_index], estimation_err_var, gammas=gammas,
+        env, env.topology_label, estimation_err_var, gammas=gammas,
         alg=alg, explorators=explorators, epsilons=epsilons,
         repetitions=repetitions)
     
     parametric_sim_errorVar_train_once(
-        env, topology_labels[top_index], estimation_err_var, train_est_err_var,
+        env, env.topology_label, estimation_err_var, train_est_err_var,
         gammas=gammas, alg=alg, explorators=explorators, epsilons=epsilons,
         repetitions=repetitions)
 

@@ -9,7 +9,9 @@ import chainerrl
 import gym
 import time
 import numpy as np
-
+import matplotlib.pyplot as plt
+from datetime import date, datetime
+from pathlib import Path
 from operator import add
 
 from agent_creator import make_training_agents
@@ -22,8 +24,6 @@ optimal_reward = 0 # Optimal reward of offloader
 ### - Computation offloading agents with ChainerRL - ###
 
 def train_scenario(env, agents):
-    
-    # Training
     """
     The training environment consists of a network with four types of nodes
     (cloud, MEC, RSU and vehicles). They each have resources in the form of
@@ -37,7 +37,27 @@ def train_scenario(env, agents):
     that its output data is returned to the corresponding vehicle within a
     maximum latency.
     """
+    # Create the directory (if not created) where the data will be stored
+    results_path = "Results/SingleTraining/" + str(date.today()) + "/"
+    Path(results_path).mkdir(parents=True, exist_ok=True)
+    
+    # Create log file for storing the data
+    try:
+        log_file = open(results_path + "TestLog_" + str(date.today()) + '.txt',
+                        'wt', encoding='utf-8')
+    except:
+        raise KeyboardInterrupt('Error while initializing log file...aborting')
+    
+    # Add basic information to log file
+    log_file.write("Experiment Log - " + str(datetime.today()) + '\n\n')
+    log_file.write("Network topology: " + env.topology_label + "\n")
+    log_file.write("Vehicles in network: " + env.n_vehicles + "\n")
+    log_file.write("Error variance: " + env.core_manager.error_var + "\n")
+    log_file.write("---------------------------------------------------\n\n")
+    
+    # Training
     print('---TRAINING---')
+    log_file.write('---TRAINING---\n')
     # Number of time steps to assume a stationary state in the network
     start_up = 1000
     n_time_steps = 310000 # For 10^-3 precision -> ~10^5 sample points
@@ -52,6 +72,7 @@ def train_scenario(env, agents):
     # Iterate through the different types of agents
     for batch in range(len(agents)):
         print('--Batch', batch, 'in training...')
+        log_file.write('--Batch ' + batch + ' in training...\n')
         # Stores training times of agents of given type (of batch)
         total_training_times = []
         agent_training_times = []
@@ -60,6 +81,7 @@ def train_scenario(env, agents):
         # Iterate through the replicas of agents
         for a in range(len(agents[batch])):
             print('--Agent', a, 'in training...')
+            log_file.write('--Agent ' + a + ' in training...\n')
             # Stores rewards during training (one agent)
             rewards = []
             # Stores accumulated averaged rewards during training (one agent)
@@ -89,14 +111,21 @@ def train_scenario(env, agents):
                             sum(rewards[t-averaging_window:t])
                             /averaging_window)
                 # Show how training progresses
-                if(__name__ == "__main__"):
-                    if t % 10 == 0:
+                if t % 10 == 0:
+                    if(__name__ == "__main__"):
                         print('Time step', t)
-                        if(env.total_delay_est >= 0):
+                    log_file.write('Time step ' + t + '\n')
+                    if(env.total_delay_est >= 0):
+                        if(__name__ == "__main__"):
                             print('Application queued/processed succesfully')
-                        else:
+                        log_file.write(
+                            'Application queued/processed succesfully\n')
+                    else:
+                        if(__name__ == "__main__"):
                             print('Failed to queue/process the application')
-                        env.render()
+                        log_file.write(
+                            'Failed to queue/process the application\n')
+                    env.render()
             
             # End of training
             
@@ -133,38 +162,66 @@ def train_scenario(env, agents):
               and third dimension index 1 is agent info.
         """
         
-        if(__name__ == "__main__"):
-            # Plot results of batch (average rewards)
-            labels = ['Time step', 'Average reward',
-                      'Evolution of rewards (' + agents[batch][0][1] + ')']
-            makeFigurePlot(
-                x_axis, average_reward_values, optimal_reward, labels)
-    
-    if(__name__ == "__main__"):
-        # Plot results of best performing agents (average rewards)
+        #if(__name__ == "__main__"):
+        # Plot results of batch (average rewards)
         labels = ['Time step', 'Average reward',
-                  'Evolution of rewards (best agents)']
-        legend = []
-        for a in range(len(top_agents_average)):
-            legend.append(agents[a][0][1])
+                  'Evolution of rewards (' + agents[batch][0][1] + ')']
         makeFigurePlot(
-            x_axis, top_agents_average, optimal_reward, labels, legend)
+            x_axis, average_reward_values, optimal_reward, labels)
+        plt.savefig(results_path + labels[2] + '.svg')
+    
+    #if(__name__ == "__main__"):
+    # Plot results of best performing agents (average rewards)
+    labels = ['Time step', 'Average reward',
+              'Evolution of rewards (best agents)']
+    legend = []
+    for a in range(len(top_agents_average)):
+        legend.append(agents[a][0][1])
+    makeFigurePlot(
+        x_axis, top_agents_average, optimal_reward, labels, legend)
+    plt.savefig(results_path + labels[2] + '.svg')
     
     # Average times
     print("\n--Average agent processing times:")
+    log_file.write("\n--Average agent processing times:\n")
     for batch in range(len(agents)):
         print(agents[batch][0][1], ': ', average_agent_training_times[batch],
               's', sep='')
+        log_file.write(agents[batch][0][1] + ': ' +
+                       average_agent_training_times[batch] + 's\n')
     print("\n--Average training times:")
+    log_file.write("\n--Average training times:\n")
     for batch in range(len(agents)):
         print(agents[batch][0][1], ': ', average_total_training_times[batch],
               's', sep='')
-    print('NOTE: The training time takes into account some data collecting!')
+        log_file.write(agents[batch][0][1] + ': ' +
+                       average_total_training_times[batch] + 's\n')
+    print('NOTE: The training time takes into account some data collecting!\n')
+    log_file.write(
+        'NOTE: The training time takes into account some data collecting!\n')
     
     return {'train_avg_total_times': average_total_training_times,
             'train_avg_agent_times': average_agent_training_times}
 
 def test_scenario(env, agents):
+    
+    # Create the directory (if not created) where the data will be stored
+    results_path = "Results/SingleTesting/" + str(date.today()) + "/"
+    Path(results_path).mkdir(parents=True, exist_ok=True)
+    
+    # Create log file for storing the data
+    try:
+        log_file = open(results_path + "TestLog_" + str(date.today()) + '.txt',
+                        'wt', encoding='utf-8')
+    except:
+        raise KeyboardInterrupt('Error while initializing log file...aborting')
+    
+    # Add basic information to log file
+    log_file.write("Experiment Log - " + str(datetime.today()) + '\n\n')
+    log_file.write("Network topology: " + env.topology_label + "\n")
+    log_file.write("Vehicles in network: " + env.n_vehicles + "\n")
+    log_file.write("Error variance: " + env.core_manager.error_var + "\n")
+    log_file.write("---------------------------------------------------\n\n")
     
     # Environment parameters required for testing
     n_apps = len(env.traffic_generator.apps)
@@ -179,7 +236,8 @@ def test_scenario(env, agents):
     test_app_delay_avg = []
     # Testing total delays of each petition per application
     test_app_delays = []
-    print('\n---TESTING---')
+    print('---TESTING---')
+    log_file.write('---TESTING---\n')
     # Number of time steps to assume a stationary state in the network
     start_up = 1000
     n_time_steps = 100000 # For 10^-3 precision -> ~10^5 sample points
@@ -193,6 +251,7 @@ def test_scenario(env, agents):
         print(agents[batch][0][1], ':', sep='')
         for a in range(len(agents[batch])):
             print('  Replica', a, end=':\n')
+            log_file.write('  Replica' + a + ':\n')
             obs = env.reset()
             done = False
             reward = 0
@@ -259,7 +318,7 @@ def test_scenario(env, agents):
             batch_app_delays.append(app_delays)
             
             # Print results of replica
-            print('   -Success rate: ', batch_success_rate[a]*100, '%',
+            print('   -Success rate: ', str(batch_success_rate[a]*100), '%',
                   sep='')
             print('   -Processed application rate:')
             print('   |-> Apps: ', str(env.traffic_generator.apps), sep='')
@@ -269,13 +328,35 @@ def test_scenario(env, agents):
                 sep='')
             print('   -Action distribution:')
             for i in range(n_apps):
-                print('   |-> App ', (i+1), ': ', sep='')
-                print('    |-> Nodes: ', str(env.node_type) , sep='')
+                print('   |-> App ', (i+1), ':', sep='')
+                print('    |-> Nodes: ', str(env.node_type), sep='')
                 print('    |-> Dist.: ',
                       str(batch_act_distribution[a][i]*100), '%', sep='')
             print('   -Total application delay average:')
             print('   |-> Apps:   ', str(env.traffic_generator.apps), sep='')
             print('   |-> Delays: ', str(batch_app_delay_avg[a]), sep='')
+            
+            # Log results of replica
+            log_file.write('   -Success rate: ' +
+                           str(batch_success_rate[a]*100) + '%\n')
+            log_file.write('   -Processed application rate:\n')
+            log_file.write('   |-> Apps: ' + str(env.traffic_generator.apps) +
+                           '\n')
+            log_file.write('   |-> Num.: ' + str(batch_app_processed[a]) +
+                           '\n')
+            log_file.write('   |-> Rate: ' + str(list(
+                np.divide(batch_app_processed[a], batch_app_count[a]))) + '\n')
+            log_file.write('   -Action distribution:\n')
+            for i in range(n_apps):
+                log_file.write('   |-> App ' + (i+1) + ':\n')
+                log_file.write('    |-> Nodes: ' + str(env.node_type) + '\n')
+                log_file.write('    |-> Dist.: ' +
+                               str(batch_act_distribution[a][i]*100) + '%\n')
+            log_file.write('   -Total application delay average:\n')
+            log_file.write('   |-> Apps:   ' +
+                           str(env.traffic_generator.apps) + '\n')
+            log_file.write('   |-> Delays: ' + str(batch_app_delay_avg[a]) +
+                           '\n')
         
         # Look for best performing agent (based on average delays)
         best = sum(batch_app_delay_avg[0])
@@ -301,18 +382,19 @@ def test_scenario(env, agents):
         test_act_distribution.append(batch_act_distribution[best_agent])
     
     # Create histogram of delays of each application (only best agents)
-    if(__name__ == "__main__"):
-        for i in range(n_apps):
-            labels = ['Total application delay', '',
-                      env.traffic_generator.app_info[i]]
-            legend = []
-            y_axis = []
-            for batch in range(len(test_act_distribution)):
-                legend.append(agents[batch][0][1] + '(best)')
-                y_axis.append(test_app_delays[batch][i])
-            bins = 20
-            max_delay = env.traffic_generator.app_max_delay[i]
-            makeFigureHistSubplot(y_axis, bins, labels, legend, max_delay)
+    #if(__name__ == "__main__"):
+    for i in range(n_apps):
+        labels = ['Total application delay', '',
+                  env.traffic_generator.app_info[i]]
+        legend = []
+        y_axis = []
+        for batch in range(len(test_act_distribution)):
+            legend.append(agents[batch][0][1] + '(best)')
+            y_axis.append(test_app_delays[batch][i])
+        bins = 20
+        max_delay = env.traffic_generator.app_max_delay[i]
+        makeFigureHistSubplot(y_axis, bins, labels, legend, max_delay)
+        plt.savefig(results_path + labels[2] + '.svg')
     
     return {'test_success_rate': test_success_rate}
 
