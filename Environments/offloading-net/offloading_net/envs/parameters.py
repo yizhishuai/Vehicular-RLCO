@@ -28,7 +28,7 @@ except:
 
 topology_label = topology_labels[topologies.index(topology)]
 
-print("Environment is being created for network topology: " + topology + "\n")
+print("Environment is being created for network topology: " + topology_label)
 
 # Links and bitrate/delay of each link (loaded from .csv)
 data = pd.read_csv(path_to_env + topology + '.csv')

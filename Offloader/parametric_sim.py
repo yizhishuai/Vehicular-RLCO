@@ -193,7 +193,7 @@ def parametric_sim_vehicles_train_once(
         test_success_rate.append(test_results['test_success_rate'])
     
     # Create the directory (if not created) where the data will be stored
-    results_path = "Results/Vehicles/TrainOnce/"
+    results_path = "Results/VehicleVar/TrainOnce/"
     Path(results_path).mkdir(parents=True, exist_ok=True)
     
     ## Plot results

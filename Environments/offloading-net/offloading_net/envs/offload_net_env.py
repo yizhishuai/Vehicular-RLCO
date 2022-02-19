@@ -274,9 +274,13 @@ class offload_netEnv(gym.Env):
 
     def render(self, mode='human'):
         # Print current core reservation times
-        print('Core reservation time:', self.obs[0:self.n_cores])
+        #print('Core reservation time:', self.obs[0:self.n_cores])
+        info = 'Core reservation time: ' + str(self.obs[0:self.n_cores]) + '\n'
         # Print next application to be processed
-        print('Next application:', self.app)
+        #print('Next application:', self.app)
+        info = info + 'Next application: ' + str(self.app)
+        
+        return info
     
     def get_path(self, action):
         # Translate the action to the correct node number if the agent decides

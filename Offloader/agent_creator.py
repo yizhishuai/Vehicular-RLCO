@@ -50,7 +50,7 @@ def create_agent(
         
         # Exploration & agent info
         if(exp_type in 'constant'):
-            agent_info = ('DDQN: ' + 'Constant ' + chr(949) + '=' +
+            agent_info = ('DDQN - ' + 'Constant ' + chr(949) + '=' +
                           str(epsilon) + ' (' + chr(947) + '=' + str(gamma) +
                           ')')
             explorer = chainerrl.explorers.ConstantEpsilonGreedy(
@@ -60,7 +60,7 @@ def create_agent(
                 raise KeyboardInterrupt(
                     'Error while creating agent: Linear decay exploration does'
                     'not work with a constant epsilon')
-            agent_info = ('DDQN: ' + 'Linear decay ' + chr(949) + '=' +
+            agent_info = ('DDQN - ' + 'Linear decay ' + chr(949) + '=' +
                           str(epsilon[0]) + '->' + str(epsilon[1]) + ' in ' +
                           str(epsilon[2]) + ' time steps' + ' (' + chr(947) +
                           '=' + str(gamma) + ')')
@@ -90,7 +90,7 @@ def create_agent(
         
         # Exploration & agent info
         if(exp_type in 'constant'):
-            agent_info = ('SARSA: ' + 'Constant ' + chr(949) + '=' +
+            agent_info = ('SARSA - ' + 'Constant ' + chr(949) + '=' +
                           str(epsilon) + ' (' + chr(947) + '=' + str(gamma) +
                           ')')
             explorer = chainerrl.explorers.ConstantEpsilonGreedy(
@@ -100,7 +100,7 @@ def create_agent(
                 raise KeyboardInterrupt(
                     'Error while creating agent: Linear decay exploration does'
                     'not work with a constant epsilon')
-            agent_info = ('SARSA: ' + 'Linear decay ' + chr(949) + '=' +
+            agent_info = ('SARSA - ' + 'Linear decay ' + chr(949) + '=' +
                           str(epsilon[0]) + '->' + str(epsilon[1]) + ' in ' +
                           str(epsilon[2]) + ' time steps' + ' (' + chr(947) +
                           '=' + str(gamma) + ')')
@@ -130,7 +130,7 @@ def create_agent(
         
         # Exploration & agent info
         if(exp_type in 'constant'):
-            agent_info = ('PAL: ' + 'Constant ' + chr(949) + '=' +
+            agent_info = ('PAL - ' + 'Constant ' + chr(949) + '=' +
                           str(epsilon) + ' (' + chr(947) + '=' + str(gamma) +
                           ')')
             explorer = chainerrl.explorers.ConstantEpsilonGreedy(
@@ -140,7 +140,7 @@ def create_agent(
                 raise KeyboardInterrupt(
                     'Error while creating agent: Linear decay exploration does'
                     'not work with a constant epsilon')
-            agent_info = ('PAL: ' + 'Linear decay ' + chr(949) + '=' +
+            agent_info = ('PAL - ' + 'Linear decay ' + chr(949) + '=' +
                           str(epsilon[0]) + '->' + str(epsilon[1]) + ' in ' +
                           str(epsilon[2]) + ' time steps' + ' (' + chr(947) +
                           '=' + str(gamma) + ')')

@@ -5,6 +5,7 @@ Created on Sat Nov 13 16:34:35 2021
 @author: Mieszko Ferens
 """
 
+import os
 import chainerrl
 import gym
 import time
@@ -39,6 +40,12 @@ def train_scenario(env, agents):
     """
     # Create the directory (if not created) where the data will be stored
     results_path = "Results/SingleTraining/" + str(date.today()) + "/"
+    i = 0
+    while(1):
+        if(not os.path.exists(results_path + str(i) + "/")):
+            results_path += str(i) + "/"
+            break
+        i += 1
     Path(results_path).mkdir(parents=True, exist_ok=True)
     
     # Create log file for storing the data
@@ -50,9 +57,9 @@ def train_scenario(env, agents):
     
     # Add basic information to log file
     log_file.write("Experiment Log - " + str(datetime.today()) + '\n\n')
-    log_file.write("Network topology: " + env.topology_label + "\n")
-    log_file.write("Vehicles in network: " + env.n_vehicles + "\n")
-    log_file.write("Error variance: " + env.core_manager.error_var + "\n")
+    log_file.write("Network topology: " + str(env.topology_label) + "\n")
+    log_file.write("Vehicles in network: " + str(env.n_vehicles) + "\n")
+    log_file.write("Error variance: " + str(env.core_manager.error_var) + "\n")
     log_file.write("---------------------------------------------------\n\n")
     
     # Training
@@ -60,7 +67,7 @@ def train_scenario(env, agents):
     log_file.write('---TRAINING---\n')
     # Number of time steps to assume a stationary state in the network
     start_up = 1000
-    n_time_steps = 310000 # For 10^-3 precision -> ~10^5 sample points
+    n_time_steps = 110000 # For 10^-3 precision -> ~10^5 sample points
     # Number of last episodes to use for average reward calculation
     averaging_window = 10000
     x_axis = range(1, start_up+n_time_steps+1) # X axis for ploting results
@@ -72,7 +79,7 @@ def train_scenario(env, agents):
     # Iterate through the different types of agents
     for batch in range(len(agents)):
         print('--Batch', batch, 'in training...')
-        log_file.write('--Batch ' + batch + ' in training...\n')
+        log_file.write('--Batch ' + str(batch) + ' in training...\n')
         # Stores training times of agents of given type (of batch)
         total_training_times = []
         agent_training_times = []
@@ -81,7 +88,7 @@ def train_scenario(env, agents):
         # Iterate through the replicas of agents
         for a in range(len(agents[batch])):
             print('--Agent', a, 'in training...')
-            log_file.write('--Agent ' + a + ' in training...\n')
+            log_file.write('--Agent ' + str(a) + ' in training...\n')
             # Stores rewards during training (one agent)
             rewards = []
             # Stores accumulated averaged rewards during training (one agent)
@@ -114,7 +121,7 @@ def train_scenario(env, agents):
                 if t % 10 == 0:
                     if(__name__ == "__main__"):
                         print('Time step', t)
-                    log_file.write('Time step ' + t + '\n')
+                    log_file.write('Time step ' + str(t) + '\n')
                     if(env.total_delay_est >= 0):
                         if(__name__ == "__main__"):
                             print('Application queued/processed succesfully')
@@ -125,7 +132,10 @@ def train_scenario(env, agents):
                             print('Failed to queue/process the application')
                         log_file.write(
                             'Failed to queue/process the application\n')
-                    env.render()
+                    render_info = env.render()
+                    if(__name__ == "__main__"):
+                        print(render_info)
+                    log_file.write(render_info + '\n')
             
             # End of training
             
@@ -181,6 +191,8 @@ def train_scenario(env, agents):
         x_axis, top_agents_average, optimal_reward, labels, legend)
     plt.savefig(results_path + labels[2] + '.svg')
     
+    plt.close('all') # Close all figures
+    
     # Average times
     print("\n--Average agent processing times:")
     log_file.write("\n--Average agent processing times:\n")
@@ -188,17 +200,19 @@ def train_scenario(env, agents):
         print(agents[batch][0][1], ': ', average_agent_training_times[batch],
               's', sep='')
         log_file.write(agents[batch][0][1] + ': ' +
-                       average_agent_training_times[batch] + 's\n')
+                       str(average_agent_training_times[batch]) + 's\n')
     print("\n--Average training times:")
     log_file.write("\n--Average training times:\n")
     for batch in range(len(agents)):
         print(agents[batch][0][1], ': ', average_total_training_times[batch],
               's', sep='')
         log_file.write(agents[batch][0][1] + ': ' +
-                       average_total_training_times[batch] + 's\n')
+                       str(average_total_training_times[batch]) + 's\n')
     print('NOTE: The training time takes into account some data collecting!\n')
     log_file.write(
         'NOTE: The training time takes into account some data collecting!\n')
+    
+    log_file.close() # Close log file
     
     return {'train_avg_total_times': average_total_training_times,
             'train_avg_agent_times': average_agent_training_times}
@@ -207,6 +221,12 @@ def test_scenario(env, agents):
     
     # Create the directory (if not created) where the data will be stored
     results_path = "Results/SingleTesting/" + str(date.today()) + "/"
+    i = 0
+    while(1):
+        if(not os.path.exists(results_path + str(i) + "/")):
+            results_path += str(i) + "/"
+            break
+        i += 1
     Path(results_path).mkdir(parents=True, exist_ok=True)
     
     # Create log file for storing the data
@@ -218,9 +238,9 @@ def test_scenario(env, agents):
     
     # Add basic information to log file
     log_file.write("Experiment Log - " + str(datetime.today()) + '\n\n')
-    log_file.write("Network topology: " + env.topology_label + "\n")
-    log_file.write("Vehicles in network: " + env.n_vehicles + "\n")
-    log_file.write("Error variance: " + env.core_manager.error_var + "\n")
+    log_file.write("Network topology: " + str(env.topology_label) + "\n")
+    log_file.write("Vehicles in network: " + str(env.n_vehicles) + "\n")
+    log_file.write("Error variance: " + str(env.core_manager.error_var) + "\n")
     log_file.write("---------------------------------------------------\n\n")
     
     # Environment parameters required for testing
@@ -249,9 +269,10 @@ def test_scenario(env, agents):
         batch_app_delay_avg = []
         batch_app_delays = []
         print(agents[batch][0][1], ':', sep='')
+        log_file.write(str(agents[batch][0][1]) + ':')
         for a in range(len(agents[batch])):
             print('  Replica', a, end=':\n')
-            log_file.write('  Replica' + a + ':\n')
+            log_file.write('  Replica ' + str(a) + ':\n')
             obs = env.reset()
             done = False
             reward = 0
@@ -348,7 +369,7 @@ def test_scenario(env, agents):
                 np.divide(batch_app_processed[a], batch_app_count[a]))) + '\n')
             log_file.write('   -Action distribution:\n')
             for i in range(n_apps):
-                log_file.write('   |-> App ' + (i+1) + ':\n')
+                log_file.write('   |-> App ' + str(i+1) + ':\n')
                 log_file.write('    |-> Nodes: ' + str(env.node_type) + '\n')
                 log_file.write('    |-> Dist.: ' +
                                str(batch_act_distribution[a][i]*100) + '%\n')
@@ -395,6 +416,9 @@ def test_scenario(env, agents):
         max_delay = env.traffic_generator.app_max_delay[i]
         makeFigureHistSubplot(y_axis, bins, labels, legend, max_delay)
         plt.savefig(results_path + labels[2] + '.svg')
+    
+    plt.close('all') # Close all figures
+    log_file.close() # Close log file
     
     return {'test_success_rate': test_success_rate}
 
