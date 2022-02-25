@@ -24,7 +24,7 @@ try:
     topology = state_file.read() # Defined from main
     state_file.close()
 except:
-    topology = 'network_branchless' # Default for single simulation testing
+    topology = 'network_branchless_v2' # Default for single simulation testing
 
 topology_label = topology_labels[topologies.index(topology)]
 
@@ -65,14 +65,14 @@ net_nodes = sum(map(lambda x : x<4, node_type))
 # node can represent multiple vehicles)
 n_vehicles = 50
 
-# Default variation of error in estimation of processing time (in ms)
+# Default variation coeficient of error in estimation of processing time
 estimation_err_var = 0
 # Limits to variation of times
 upper_var_limit = 0.5 # Percentage out of corresponding total time
 lower_var_limit = 0.5 # Percentage out of corresponding total time
 
 # Define the cores' queue limit time and reservation amount
-time_limit = max(app_max_delay) # Memory in cores (buffer) -Over max is useless
+time_limit = min(max(app_max_delay), 500) # Memory in cores (buffer)
 reserv_limit = 1000 # Simulator limit
 
 ## Precalculated routes

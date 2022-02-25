@@ -17,7 +17,7 @@ class core_manager():
         # Number of network nodes which the class store information of
         self.net_nodes = 0
         
-        # Processing time estimation error variation (in ms)
+        # Processing time estimation error variation coeficient
         self.error_var = error_var
         # Processing time estimation error variation limits (percentage)
         self.upper_var_limit = upper_var_limit
@@ -369,7 +369,8 @@ class core_manager():
         """
         
         # Generate the random variation using a normal distribution with limits
-        var = self.error_var * np.random.randn()
+        var = (self.error_var * self.total_est_delay[node][core][i] *
+               np.random.randn())
         var = np.around(min(
             var, (self.reserv_end[node][core][i] -
                   self.reserv_start[node][core][i]) * self.upper_var_limit),
@@ -468,4 +469,9 @@ class core_manager():
     def set_error_var(self, error_var):
         self.error_var = error_var
     
+    def set_upper_var_limit(self, upper_lim):
+        self.upper_var_limit = upper_lim
     
+    def set_lower_var_limit(self, lower_lim):
+        self.lower_var_limit = lower_lim
+

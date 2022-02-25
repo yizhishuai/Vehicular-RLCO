@@ -67,7 +67,7 @@ def train_scenario(env, agents):
     log_file.write('---TRAINING---\n')
     # Number of time steps to assume a stationary state in the network
     start_up = 1000
-    n_time_steps = 110000 # For 10^-3 precision -> ~10^5 sample points
+    n_time_steps = 510000 # For 10^-3 precision -> ~10^5 sample points
     # Number of last episodes to use for average reward calculation
     averaging_window = 10000
     x_axis = range(1, start_up+n_time_steps+1) # X axis for ploting results
@@ -269,7 +269,7 @@ def test_scenario(env, agents):
         batch_app_delay_avg = []
         batch_app_delays = []
         print(agents[batch][0][1], ':', sep='')
-        log_file.write(str(agents[batch][0][1]) + ':')
+        log_file.write(str(agents[batch][0][1]) + ':\n')
         for a in range(len(agents[batch])):
             print('  Replica', a, end=':\n')
             log_file.write('  Replica ' + str(a) + ':\n')

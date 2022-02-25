@@ -30,8 +30,9 @@ topology_labels = ["Branchless network", "Branchless network v2"]
 
 # Function for parametric simulation of number of vehicles (train per test)
 def parametric_sim_vehicles_train_per_test(
-        env, topology, n_vehicles, gammas=0.995, alg='DDQN',
-        explorators='const', epsilons=0.2, repetitions=1):
+        env, topology, n_vehicles, estimation_err_var, upper_var_limit,
+        lower_var_limit, gammas=0.995, alg='DDQN', explorators='const',
+        epsilons=0.2, repetitions=1):
     
     # Parameter error
     if(not isinstance(n_vehicles, list)):
@@ -41,6 +42,11 @@ def parametric_sim_vehicles_train_per_test(
     
     ## Run simulations with varying network load, training the agents for each
     ## network scenario
+    
+    # Set invariable environment parameters
+    env.set_error_var(estimation_err_var)
+    env.set_upper_var_limit(upper_var_limit)
+    env.set_lower_var_limit(lower_var_limit)
     
     # Metrics
     train_avg_total_times = []
@@ -68,6 +74,10 @@ def parametric_sim_vehicles_train_per_test(
         train_avg_total_times.append(train_results['train_avg_total_times'])
         train_avg_agent_times.append(train_results['train_avg_agent_times'])
         test_success_rate.append(test_results['test_success_rate'])
+        
+        # Delete previous agents so new once can be created (unless fineshed)
+        if(not i == len(n_vehicles) - 1):
+            del agents
     
     # Create the directory (if not created) where the data will be stored
     results_path = "Results/VehicleVar/TrainPerTest/"
@@ -148,7 +158,8 @@ def parametric_sim_vehicles_train_per_test(
 
 # Function for parametric simulation of number of vehicles (train once)
 def parametric_sim_vehicles_train_once(
-        env, topology, n_vehicles, train_vehicles, gammas=0.995, alg='DDQN',
+        env, topology, n_vehicles, train_vehicles, estimation_err_var,
+        upper_var_limit, lower_var_limit, gammas=0.995, alg='DDQN',
         explorators='const', epsilons=0.2, repetitions=1):
     
     # Parameter error
@@ -159,6 +170,11 @@ def parametric_sim_vehicles_train_once(
     
     ## Run simulations with varying network load, training the agents for each
     ## network scenario
+    
+    # Set invariable environment parameters
+    env.set_error_var(estimation_err_var)
+    env.set_upper_var_limit(upper_var_limit)
+    env.set_lower_var_limit(lower_var_limit)
     
     # Metrics
     train_avg_total_times = []
@@ -258,8 +274,9 @@ def parametric_sim_vehicles_train_once(
 
 # Function for parametric simulation of error variance (train per test)
 def parametric_sim_errorVar_train_per_test(
-        env, topology, estimation_err_var, gammas=0.995, alg='DDQN',
-        explorators='const', epsilons=0.2, repetitions=1):
+        env, topology, n_vehicles, estimation_err_var, upper_var_limit,
+        lower_var_limit, gammas=0.995, alg='DDQN', explorators='const',
+        epsilons=0.2, repetitions=1):
     
     # Parameter error
     if(not isinstance(estimation_err_var, list)):
@@ -269,6 +286,11 @@ def parametric_sim_errorVar_train_per_test(
     
     ## Run simulations with varying estimation error variance, training the
     ## agents for each network scenario
+    
+    # Set invariable environment parameters
+    env.set_total_vehicles(n_vehicles)
+    env.set_upper_var_limit(upper_var_limit)
+    env.set_lower_var_limit(lower_var_limit)
     
     # Metrics
     train_avg_total_times = []
@@ -296,6 +318,10 @@ def parametric_sim_errorVar_train_per_test(
         train_avg_total_times.append(train_results['train_avg_total_times'])
         train_avg_agent_times.append(train_results['train_avg_agent_times'])
         test_success_rate.append(test_results['test_success_rate'])
+        
+        # Delete previous agents so new once can be created (unless fineshed)
+        if(not i == len(n_vehicles) - 1):
+            del agents
     
     # Create the directory (if not created) where the data will be stored
     results_path = "Results/ErrorVar/TrainPerTest/"
@@ -376,8 +402,9 @@ def parametric_sim_errorVar_train_per_test(
 
 # Function for parametric simulation of error variance (train once)
 def parametric_sim_errorVar_train_once(
-        env, topology, estimation_err_var, train_est_err_var, gammas=0.995,
-        alg='DDQN', explorators='const', epsilons=0.2, repetitions=1):
+        env, topology, n_vehicles, estimation_err_var, train_est_err_var,
+        upper_var_limit, lower_var_limit, gammas=0.995, alg='DDQN',
+        explorators='const', epsilons=0.2, repetitions=1):
     
     # Parameter error
     if(not isinstance(estimation_err_var, list)):
@@ -387,6 +414,11 @@ def parametric_sim_errorVar_train_once(
     
     ## Run simulations with varying estimation error variance, training the
     ## agents for each network scenario
+    
+    # Set invariable environment parameters
+    env.set_total_vehicles(n_vehicles)
+    env.set_upper_var_limit(upper_var_limit)
+    env.set_lower_var_limit(lower_var_limit)
     
     # Metrics
     train_avg_total_times = []
@@ -531,9 +563,15 @@ if(__name__ == "__main__"):
     
     # Simulation parameters
     train_vehicles = 50
+    default_vehicles = 50
     n_vehicles = [10, 30, 50]
+    
     train_est_err_var = 0
-    estimation_err_var = [0, 2, 4]
+    default_est_err_var = 0
+    estimation_err_var = [0, 0.5, 1]
+    
+    upper_var_limit = 0.5
+    lower_var_limit = 0.5
     
     ## Default agents parameters
     # Discount factors
@@ -553,21 +591,24 @@ if(__name__ == "__main__"):
     
     # Run simulations
     parametric_sim_vehicles_train_per_test(
-        env, env.topology_label, n_vehicles, gammas=gammas, alg=alg,
+        env, env.topology_label, n_vehicles, default_est_err_var,
+        upper_var_limit, lower_var_limit, gammas=gammas, alg=alg,
         explorators=explorators, epsilons=epsilons, repetitions=repetitions)
     
     parametric_sim_vehicles_train_once(
-        env, env.topology_label, n_vehicles, train_vehicles, gammas=gammas,
+        env, env.topology_label, n_vehicles, train_vehicles,
+        default_est_err_var, upper_var_limit, lower_var_limit, gammas=gammas,
         alg=alg, explorators=explorators, epsilons=epsilons,
         repetitions=repetitions)
     
     parametric_sim_errorVar_train_per_test(
-        env, env.topology_label, estimation_err_var, gammas=gammas,
-        alg=alg, explorators=explorators, epsilons=epsilons,
-        repetitions=repetitions)
+        env, env.topology_label, default_vehicles, estimation_err_var,
+        upper_var_limit, lower_var_limit, gammas=gammas, alg=alg,
+        explorators=explorators, epsilons=epsilons, repetitions=repetitions)
     
     parametric_sim_errorVar_train_once(
-        env, env.topology_label, estimation_err_var, train_est_err_var,
-        gammas=gammas, alg=alg, explorators=explorators, epsilons=epsilons,
+        env, env.topology_label, default_vehicles, estimation_err_var,
+        train_est_err_var, upper_var_limit, lower_var_limit, gammas=gammas,
+        alg=alg, explorators=explorators, epsilons=epsilons,
         repetitions=repetitions)
 

@@ -115,7 +115,7 @@ class offload_netEnv(gym.Env):
         self.n_cores = 0
         for a in range(n_nodes):
             if(node_cores[a] > 0): # Ignore cloud nodes
-                self.n_cores += node_cores[a]
+                self.n_cores += node_cores[a] # TODO (incorrect if more that 1 vehicle node)
         
         # Total number of vehicles in the network
         self.n_vehicles = n_vehicles
@@ -136,7 +136,8 @@ class offload_netEnv(gym.Env):
         # The observation space has an element per core in the network (with
         # the exception of vehicles, where only one is observable at a time)
         self.observation_space = spaces.Box(low=0, high=1, shape=(
-            self.n_cores + self.app_param_count, 1), dtype=np.float32)
+            self.n_cores + self.app_param_count + net_nodes + 1, 1),
+            dtype=np.float32)
         
         self.action_space = spaces.Discrete(net_nodes + 1)
 
@@ -236,6 +237,15 @@ class offload_netEnv(gym.Env):
         app_type.append(self.app_data_out/self.max_data_out)
         app_type.append(self.app_max_delay/self.max_delay)
         self.obs = np.append(self.obs, np.array(app_type, dtype=np.float32))
+        
+        # Add current petition's estimated delay for each possible action
+        predict_delay = []
+        for action in range(net_nodes + 1):
+            path = self.get_path(action)
+            predict_delay.append(min(
+                sum(self.calc_delays(action, path))/self.app_max_delay), 1)
+        self.obs = np.append(
+            self.obs, np.array(predict_delay, dtype=np.float32))
 
         done = False # This environment is continuous and is never done
 
@@ -268,7 +278,8 @@ class offload_netEnv(gym.Env):
         
         # Calculate observation
         self.obs = np.array(
-            [0]*(self.n_cores + self.app_param_count), dtype=np.float32)
+            [0]*(self.n_cores + self.app_param_count + net_nodes + 1),
+            dtype=np.float32)
         
         return self.obs
 
@@ -326,4 +337,10 @@ class offload_netEnv(gym.Env):
     
     def set_error_var(self, error_var):
         self.core_manager.set_error_var(error_var)
+    
+    def set_upper_var_limit(self, upper_lim):
+        self.core_manager.set_upper_var_limit(upper_lim)
+    
+    def set_lower_var_limit(self, lower_lim):
+        self.core_manager.set_lower_var_limit(lower_lim)
 
