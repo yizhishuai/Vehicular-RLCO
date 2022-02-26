@@ -17,7 +17,7 @@ from .parameters import (links, links_rate, links_delay, node_type, node_clock,
                          node_cores, n_nodes, net_nodes, n_vehicles, all_paths,
                          node_comb, apps, app_cost, app_data_in, app_data_out,
                          app_max_delay, app_rate, app_info, estimation_err_var,
-                         upper_var_limit, lower_var_limit, time_limit,
+                         upper_var_limit, lower_var_limit, node_buffer,
                          reserv_limit, topology_label)
 
 """
@@ -111,11 +111,10 @@ class offload_netEnv(gym.Env):
         # For monitoring purposes the observation will be kept at all times
         self.obs = 0
         
-        # Number of cores in the network (except cloud)
+        # Number of cores in the network (except cloud) and one vehicle
         self.n_cores = 0
-        for a in range(n_nodes):
-            if(node_cores[a] > 0): # Ignore cloud nodes
-                self.n_cores += node_cores[a] # TODO (incorrect if more that 1 vehicle node)
+        for a in range(net_nodes + 1):
+            self.n_cores += node_cores[a]
         
         # Total number of vehicles in the network
         self.n_vehicles = n_vehicles
@@ -130,8 +129,7 @@ class offload_netEnv(gym.Env):
         
         # Discrete event simulator core manager initialization
         self.core_manager = core_manager(estimation_err_var, upper_var_limit,
-                                         lower_var_limit, time_limit,
-                                         reserv_limit)
+                                         lower_var_limit, reserv_limit)
         
         # The observation space has an element per core in the network (with
         # the exception of vehicles, where only one is observable at a time)
@@ -228,7 +226,14 @@ class offload_netEnv(gym.Env):
         reward += np.sum(remaining)
         reward -= len(self.total_delays[failed]) * 1000
         
-        self.success_count = len(np.where(remaining >= 0)[0]) # For metrics
+        # For metrics (successful processing)
+        self.success_count = [0]*len(apps)
+        under_max_delay = np.where(remaining == 0)[0]
+        success_count = np.unique(
+            (self.app_types[processed])[under_max_delay], return_counts=True)
+        for i, app in enumerate(success_count[0]):
+            self.success_count[app-1] += success_count[1][i]
+        #self.success_count = len(np.where(remaining >= 0)[0]) # For metrics
         
         # Add current petition's application type to observation
         app_type = []
@@ -243,7 +248,7 @@ class offload_netEnv(gym.Env):
         for action in range(net_nodes + 1):
             path = self.get_path(action)
             predict_delay.append(min(
-                sum(self.calc_delays(action, path))/self.app_max_delay), 1)
+                sum(self.calc_delays(action, path))/self.app_max_delay, 1))
         self.obs = np.append(
             self.obs, np.array(predict_delay, dtype=np.float32))
 
@@ -259,7 +264,7 @@ class offload_netEnv(gym.Env):
         
         # Reset and create all cores
         self.core_manager.reset(n_nodes, node_cores, self.node_vehicles,
-                                self.node_type)
+                                self.node_type, node_buffer)
         
         # Generate initial petitions to get things going
         self.traffic_generator.gen_initial_traffic(self.node_vehicles)

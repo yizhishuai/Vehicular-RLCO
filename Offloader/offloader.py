@@ -67,7 +67,7 @@ def train_scenario(env, agents):
     log_file.write('---TRAINING---\n')
     # Number of time steps to assume a stationary state in the network
     start_up = 1000
-    n_time_steps = 510000 # For 10^-3 precision -> ~10^5 sample points
+    n_time_steps = 110000 # For 10^-3 precision -> ~10^5 sample points
     # Number of last episodes to use for average reward calculation
     averaging_window = 10000
     x_axis = range(1, start_up+n_time_steps+1) # X axis for ploting results
@@ -172,7 +172,6 @@ def train_scenario(env, agents):
               and third dimension index 1 is agent info.
         """
         
-        #if(__name__ == "__main__"):
         # Plot results of batch (average rewards)
         labels = ['Time step', 'Average reward',
                   'Evolution of rewards (' + agents[batch][0][1] + ')']
@@ -180,7 +179,6 @@ def train_scenario(env, agents):
             x_axis, average_reward_values, optimal_reward, labels)
         plt.savefig(results_path + labels[2] + '.svg')
     
-    #if(__name__ == "__main__"):
     # Plot results of best performing agents (average rewards)
     labels = ['Time step', 'Average reward',
               'Evolution of rewards (best agents)']
@@ -250,6 +248,7 @@ def test_scenario(env, agents):
     # Testing
     # Testing average of successfully processed application for each batch
     test_success_rate = []
+    test_success_rate_per_app = []
     # Testing average of proccessing distribution on nodes per application
     test_act_distribution = []
     # Testing average of total delay observed per application
@@ -260,9 +259,10 @@ def test_scenario(env, agents):
     log_file.write('---TESTING---\n')
     # Number of time steps to assume a stationary state in the network
     start_up = 1000
-    n_time_steps = 100000 # For 10^-3 precision -> ~10^5 sample points
+    n_time_steps = 10000 # For 10^-3 precision -> ~10^5 sample points
     for batch in range(len(agents)):
         batch_success_rate = []
+        batch_success_rate_per_app = []
         batch_act_distribution = []
         batch_app_count = []
         batch_app_processed = []
@@ -276,7 +276,7 @@ def test_scenario(env, agents):
             obs = env.reset()
             done = False
             reward = 0
-            success_count = 0
+            success_count = [0]*n_apps
             last_app = 0
             t = 0
             act_distribution = np.zeros((n_apps, n_nodes), dtype=np.float32)
@@ -292,7 +292,9 @@ def test_scenario(env, agents):
                 obs, reward, done, _ = env.step(action)
                 if(t >= start_up):
                     # Count the returning applications
-                    success_count += env.success_count
+                    success_count = list(map(
+                        add, success_count, env.success_count))
+                    #success_count += env.success_count
                     app_count = list(map(add, app_count, env.app_count))
                     
                     # Count the times a certain node processed a specific app
@@ -312,7 +314,10 @@ def test_scenario(env, agents):
                 t += 1
             
             # Calculate the fraction of successfully processed applications
-            batch_success_rate.append(success_count/sum(app_count))
+            batch_success_rate.append(sum(success_count)/sum(app_count))
+            batch_success_rate_per_app.append(
+                [success / total for success, total in zip(
+                    success_count, app_count)])
             
             # Calculate the averages of application distribution throughout the
             # processing nodes
@@ -341,6 +346,8 @@ def test_scenario(env, agents):
             # Print results of replica
             print('   -Success rate: ', str(batch_success_rate[a]*100), '%',
                   sep='')
+            print('   |-> Apps: ', str(env.traffic_generator.apps), sep='')
+            print('   |-> Rate: ', str(batch_success_rate_per_app[a]), sep='')
             print('   -Processed application rate:')
             print('   |-> Apps: ', str(env.traffic_generator.apps), sep='')
             print('   |-> Num.: ', str(batch_app_processed[a]), sep='')
@@ -360,6 +367,10 @@ def test_scenario(env, agents):
             # Log results of replica
             log_file.write('   -Success rate: ' +
                            str(batch_success_rate[a]*100) + '%\n')
+            log_file.write('   |-> Apps: ' + str(env.traffic_generator.apps) +
+                           '\n')
+            log_file.write('   |-> Rate: ' + str(batch_success_rate_per_app[a])
+                + '\n')
             log_file.write('   -Processed application rate:\n')
             log_file.write('   |-> Apps: ' + str(env.traffic_generator.apps) +
                            '\n')
@@ -397,13 +408,15 @@ def test_scenario(env, agents):
         # Calculate the averages of successfully processed applications
         test_success_rate.append(
             sum(batch_success_rate)/len(batch_success_rate))
+        test_success_rate_per_app.append(
+            np.sum(batch_success_rate_per_app, axis=0)/
+            len(batch_success_rate_per_app))
         
         # Store the averages of application distribution throughout the
         # processing nodes of best agent
         test_act_distribution.append(batch_act_distribution[best_agent])
     
     # Create histogram of delays of each application (only best agents)
-    #if(__name__ == "__main__"):
     for i in range(n_apps):
         labels = ['Total application delay', '',
                   env.traffic_generator.app_info[i]]

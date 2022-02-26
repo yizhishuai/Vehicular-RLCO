@@ -24,7 +24,7 @@ try:
     topology = state_file.read() # Defined from main
     state_file.close()
 except:
-    topology = 'network_branchless_v2' # Default for single simulation testing
+    topology = 'network_branchless' # Default for single simulation testing
 
 topology_label = topology_labels[topologies.index(topology)]
 
@@ -41,6 +41,7 @@ data = pd.read_csv(path_to_env + topology + '_nodes.csv')
 node_type = data['type'].values.tolist()
 node_clock = data['clock'].values.tolist()
 node_cores = data['cores'].values.tolist()
+node_buffer = data['buffer'].values.tolist()
 
 # Check that only one cloud node exists
 if(node_type.count(1) > 1):

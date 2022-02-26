@@ -11,7 +11,7 @@ import numpy as np
 
 class core_manager():
     
-    def __init__(self, error_var, upper_var_limit, lower_var_limit, time_limit,
+    def __init__(self, error_var, upper_var_limit, lower_var_limit,
                  reserv_limit):
         
         # Number of network nodes which the class store information of
@@ -45,7 +45,7 @@ class core_manager():
         self.update_time = []
         
         # Limit for relative core load calculation (in ms)
-        self.time_limit = np.float32(time_limit)
+        self.time_limit = np.array([], dtype=np.float64)
         # Limit for maximum reservations in queue
         self.reserv_limit = reserv_limit
     
@@ -306,7 +306,7 @@ class core_manager():
                 
                 # Calculate load of the core
                 core_load.append(1 - np.sum(
-                    self.slots_duration[node][core])/self.time_limit)
+                    self.slots_duration[node][core])/self.time_limit[node])
                 if(core_load[-1] < 0):
                     raise KeyboardInterrupt(
                         "Error: Impresicion detected while updating queues")
@@ -315,7 +315,8 @@ class core_manager():
         
         return obs, total_delay, app_type
     
-    def reset(self, n_nodes, node_cores, node_vehicles, node_type):
+    def reset(self, n_nodes, node_cores, node_vehicles, node_type,
+              node_buffer):
         
         # Store the amount of non-vehicle nodes that will be managed
         self.net_nodes = n_nodes - node_type.count(4) - 1
@@ -329,6 +330,7 @@ class core_manager():
         self.total_est_delay = []
         self.app_type = []
         self.update_time = []
+        self.time_limit = np.array([], dtype=np.float64)
         for a in range(n_nodes):
             if(node_type[a] != 1): # Ignore cloud nodes
                 if(node_type[a] != 4): # If it's not a vehicle
@@ -345,8 +347,8 @@ class core_manager():
                     limit = [self.reserv_limit]*node_cores[a]
                     update_times = np.zeros(node_cores[a], dtype=np.float64)
                     for i in range(node_cores[a]):
-                        duration.append(
-                            np.array([self.time_limit], dtype=np.float64))
+                        duration.append(np.array([np.float64(node_buffer[a])],
+                                                 dtype=np.float64))
                         start.append(np.array([0], dtype=np.float64))
                         reserv_starts.append(np.array([], dtype=np.float64))
                         reserv_ends.append(np.array([], dtype=np.float64))
@@ -360,6 +362,8 @@ class core_manager():
                     self.total_est_delay.append(total_est_delays)
                     self.app_type.append(app_types)
                     self.update_time.append(update_times)
+                    self.time_limit = np.append(
+                        self.time_limit, np.float64(node_buffer[a]))
     
     def process_and_update_queue(self, i, node, core, app_time,
                                  precision_limit):
@@ -406,11 +410,12 @@ class core_manager():
         elif(var > 0): # If the processing took longer than expected
             while(1): # This loop has to reach a break line
                 # Check that the queue is still within limits
-                if(self.reserv_end[node][core][i] > self.time_limit):
+                if(self.reserv_end[node][core][i] > self.time_limit[node]):
                     self.slots_start[node][core][-1] = (
                         self.reserv_start[node][core][i])
                     self.slots_duration[node][core][-1] = (
-                        self.time_limit - self.reserv_start[node][core][i])
+                        self.time_limit[node] -
+                        self.reserv_start[node][core][i])
                     self.total_est_delay[node][core][i::] = -1
                     self.queue_limit[node][core] += len(
                         range(i, len(self.reserv_start[node][core])))
