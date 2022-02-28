@@ -69,11 +69,10 @@ n_vehicles = 50
 # Default variation coeficient of error in estimation of processing time
 estimation_err_var = 0
 # Limits to variation of times
-upper_var_limit = 0.5 # Percentage out of corresponding total time
-lower_var_limit = 0.5 # Percentage out of corresponding total time
+upper_var_limit = 1 # Percentage out of corresponding total time
+lower_var_limit = 0 # Percentage out of corresponding total time
 
-# Define the cores' queue limit time and reservation amount
-time_limit = min(max(app_max_delay), 500) # Memory in cores (buffer)
+# Define the cores' queue limit reservation amount
 reserv_limit = 1000 # Simulator limit
 
 ## Precalculated routes

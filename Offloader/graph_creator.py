@@ -74,9 +74,9 @@ def makeFigureHistSubplot(y_axis, bins=10, labels=[], legend=[], thresh=None):
         plt.subplot(len(y_axis), 1, hist+1)
         plt.hist(y_axis[hist])
         # Add threshhold line
-        if(thresh):
-            plt.xlim([-5 , max(y_axis[hist] + [thresh]) + 10])
-            plt.axvline(thresh, color='k', linestyle='--')
+        #if(thresh):
+            #plt.xlim([-5 , max(y_axis[hist] + [thresh]) + 10])
+            #plt.axvline(thresh, color='k', linestyle='--')
             #legend.insert(0, 'Max tolerable delay')
         # Label figure
         if labels:

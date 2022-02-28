@@ -233,7 +233,6 @@ class offload_netEnv(gym.Env):
             (self.app_types[processed])[under_max_delay], return_counts=True)
         for i, app in enumerate(success_count[0]):
             self.success_count[app-1] += success_count[1][i]
-        #self.success_count = len(np.where(remaining >= 0)[0]) # For metrics
         
         # Add current petition's application type to observation
         app_type = []
@@ -291,10 +290,19 @@ class offload_netEnv(gym.Env):
     def render(self, mode='human'):
         # Print current core reservation times
         #print('Core reservation time:', self.obs[0:self.n_cores])
-        info = 'Core reservation time: ' + str(self.obs[0:self.n_cores]) + '\n'
+        info = 'Core reservation time: ' + str(self.obs[0:self.n_cores])
         # Print next application to be processed
         #print('Next application:', self.app)
-        info = info + 'Next application: ' + str(self.app)
+        info = info + '\n' + 'Next application: ' + str(self.app)
+        # Print application related observation
+        #print('Application info: ' +
+        #      str(self.obs[self.n_cores:self.n_cores+self.app_param_count]))
+        info = (info + '\n' + 'Application info: ' +
+                str(self.obs[self.n_cores:self.n_cores+self.app_param_count]))
+        # Print delay prediction
+        #print('Delay prediction: ' + str(self.obs[-(net_nodes+1):]))
+        info = (info + '\n' + 'Delay prediction: ' +
+                str(self.obs[-(net_nodes+1):]))
         
         return info
     
