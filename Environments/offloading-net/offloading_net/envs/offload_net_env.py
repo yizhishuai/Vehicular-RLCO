@@ -69,9 +69,6 @@ class offload_netEnv(gym.Env):
         # Node combination list (used as information for heuristic algorithms)
         self.node_comb = node_comb
         
-        # Links bitrate (in case it needs to be modified during the simulation)
-        self.links_rate = links_rate
-        
         # Type of next application
         self.app = 0
         # Origin node of next application (vehicle)
@@ -223,6 +220,8 @@ class offload_netEnv(gym.Env):
         # Calculate total reward for current time step
         remaining = np.clip(
             max_delays[processed] - self.total_delays[processed], None, 0)
+        over_max_delay = np.where(remaining < 0)[0]
+        remaining[over_max_delay] = np.subtract(remaining[over_max_delay], 100)
         reward += np.sum(remaining)
         reward -= len(self.total_delays[failed]) * 1000
         
@@ -236,9 +235,9 @@ class offload_netEnv(gym.Env):
         
         # Add current petition's application type to observation
         app_type = []
-        app_type.append(self.app_cost/self.max_cost)
-        app_type.append(self.app_data_in/self.max_data_in)
-        app_type.append(self.app_data_out/self.max_data_out)
+        app_type.append(1 - (self.app_cost/self.max_cost))
+        app_type.append(1 - (self.app_data_in/self.max_data_in))
+        app_type.append(1 - (self.app_data_out/self.max_data_out))
         app_type.append(self.app_max_delay/self.max_delay)
         self.obs = np.append(self.obs, np.array(app_type, dtype=np.float32))
         
@@ -246,7 +245,7 @@ class offload_netEnv(gym.Env):
         predict_delay = []
         for action in range(net_nodes + 1):
             path = self.get_path(action)
-            predict_delay.append(min(
+            predict_delay.append(1 - min(
                 sum(self.calc_delays(action, path))/self.app_max_delay, 1))
         self.obs = np.append(
             self.obs, np.array(predict_delay, dtype=np.float32))
@@ -329,7 +328,7 @@ class offload_netEnv(gym.Env):
                 link = [path[a], path[a+1]]
                 link.sort()
                 link_index = links.index(link)
-                link_rate = self.links_rate[link_index] # in kbit/s
+                link_rate = links_rate[link_index] # in kbit/s
                 link_delay = links_delay[link_index] # in ms
                 
                 forward_delay += (self.app_data_in/link_rate)*1000 + link_delay
