@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Nov 13 16:44:00 2021
+Created on Sat Nov 5 10:35:00 2022
 
 @author: Mieszko Ferens
 """
 
 ### Environment for computation offloading
+
+## Nodes use planning (reserve at the earliest available slot in their queues)
+## Reward is calculated as success or failure and a benefit multiplier is used
 
 import numpy as np
 import gym
@@ -16,9 +19,9 @@ from .core_manager import core_manager
 from .parameters import (links, links_rate, links_delay, node_type, node_clock,
                          node_cores, n_nodes, net_nodes, n_vehicles, all_paths,
                          node_comb, apps, app_cost, app_data_in, app_data_out,
-                         app_max_delay, app_rate, app_info, estimation_err_var,
-                         upper_var_limit, lower_var_limit, node_buffer,
-                         reserv_limit, topology_label)
+                         app_max_delay, app_rate, app_benefit, app_info,
+                         estimation_err_var, upper_var_limit, lower_var_limit,
+                         node_buffer, reserv_limit, topology_label)
 
 """
 Explanation on implemented discrete event simulator:
@@ -53,7 +56,7 @@ Approximations are used for modeling transmision delays and queues. The focus
 is on the processing (the cores).
 """
 
-class offload_netEnv(gym.Env):
+class offload_planning_v1_netEnv(gym.Env):
 
     def __init__(self):
         # Precision limit (in number of decimals) for numpy.float64 variables
@@ -178,7 +181,7 @@ class offload_netEnv(gym.Env):
         
         ## Reward calculation (a priori)
         if(action and self.total_delay_est < 0): # Application not queued
-            reward = -1000
+            reward = -1 * app_benefit[self.app-1]
             self.app_count[self.app-1] += 1
         else: # Application queued/processed
             reward = 0
@@ -212,22 +215,28 @@ class offload_netEnv(gym.Env):
         # Check for processed and unprocessed applications
         processed = np.where(self.total_delays >= 0)[0]
         failed = np.where(self.total_delays < 0)[0]
-        # Find corresponding max tolerable delays
+        # Find corresponding max tolerable delays and benefits
         max_delays = np.array([], dtype=np.float32)
+        benefits = np.array([], dtype=np.float32)
         for i in self.app_types:
             max_delays = np.append(max_delays, app_max_delay[i-1])
+            benefits = np.append(benefits, app_benefit[i-1])
             self.app_count[i-1] += 1
         # Calculate total reward for current time step
-        remaining = np.clip(
-            max_delays[processed] - self.total_delays[processed], None, 0)
+        remaining = max_delays[processed] - self.total_delays[processed]
+        under_max_delay = np.where(remaining >= 0)[0]
         over_max_delay = np.where(remaining < 0)[0]
-        remaining[over_max_delay] = np.subtract(remaining[over_max_delay], 100)
-        reward += np.sum(remaining)
-        reward -= len(self.total_delays[failed]) * 1000
+        reward += np.sum(np.multiply(np.ones(
+            len(under_max_delay), dtype=np.float32),
+            (benefits[processed])[under_max_delay]))
+        reward -= np.sum(np.multiply(np.ones(
+            len(over_max_delay), dtype=np.float32),
+            (benefits[processed])[over_max_delay]))
+        reward -= np.sum(np.multiply(np.ones(
+            len(failed), dtype=np.float32), benefits[failed]))
         
         # For metrics (successful processing)
         self.success_count = [0]*len(apps)
-        under_max_delay = np.where(remaining == 0)[0]
         success_count = np.unique(
             (self.app_types[processed])[under_max_delay], return_counts=True)
         for i, app in enumerate(success_count[0]):
