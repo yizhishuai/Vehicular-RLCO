@@ -51,6 +51,7 @@ def parametric_sim_vehicles_train_per_test(
     # Metrics
     train_avg_total_times = []
     train_avg_agent_times = []
+    test_benefit = []
     test_success_rate = []
     
     # Train and test the agents
@@ -73,6 +74,7 @@ def parametric_sim_vehicles_train_per_test(
         test_results = test_scenario(env, agents)
         train_avg_total_times.append(train_results['train_avg_total_times'])
         train_avg_agent_times.append(train_results['train_avg_agent_times'])
+        test_benefit.append(test_results['test_benefit'])
         test_success_rate.append(test_results['test_success_rate'])
         
         # Delete previous agents so new once can be created (unless fineshed)
@@ -88,6 +90,7 @@ def parametric_sim_vehicles_train_per_test(
     # Reshape data to plot with makeFigurePlot function
     train_avg_total_times = reshape_data(train_avg_total_times)
     train_avg_agent_times = reshape_data(train_avg_agent_times)
+    test_benefit = reshape_data(test_benefit)
     test_success_rate = reshape_data(test_success_rate)
     
     # Plot graphs
@@ -103,6 +106,10 @@ def parametric_sim_vehicles_train_per_test(
     labels[1] = 'Training average agent processing times'
     makeFigurePlot(
         n_vehicles, train_avg_agent_times, labels=labels, legend=legend)
+    plt.savefig(results_path + labels[1] + '.svg')
+    labels[1] = 'Testing benefit'
+    makeFigurePlot(
+        n_vehicles, test_benefit, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
     labels[1] = 'Testing success rate'
     makeFigurePlot(
@@ -135,6 +142,7 @@ def parametric_sim_vehicles_train_per_test(
                        str(train_avg_total_times[a]) + '\n')
         log_file.write("-Training average agent processing times:\n" +
                        str(train_avg_agent_times[a]) + '\n')
+        log_file.write("-Test benefit:\n" + str(test_benefit[a]) + '\n')
         log_file.write("-Test success rate:\n" + str(test_success_rate[a]) +
                        '\n')
     
@@ -152,6 +160,7 @@ def parametric_sim_vehicles_train_per_test(
         for a in range(len(agents)):
             log_file.write(str(train_avg_total_times[a][i]) + ',')
             log_file.write(str(train_avg_agent_times[a][i]) + ',')
+            log_file.write(str(test_benefit[a][i]) + ',')
             log_file.write(str(test_success_rate[a][i]) + ',')
     
     log_file.close() # Close log file
@@ -179,6 +188,7 @@ def parametric_sim_vehicles_train_once(
     # Metrics
     train_avg_total_times = []
     train_avg_agent_times = []
+    test_benefit = []
     test_success_rate = []
     
     # Create RL agents
@@ -206,6 +216,7 @@ def parametric_sim_vehicles_train_once(
         # Test the agents
         test_results = test_scenario(env, agents)
         # Get metrics of tested agents
+        test_benefit.append(test_results['test_benefit'])
         test_success_rate.append(test_results['test_success_rate'])
     
     # Create the directory (if not created) where the data will be stored
@@ -217,14 +228,19 @@ def parametric_sim_vehicles_train_once(
     # Reshape data to plot with makeFigurePlot function
     train_avg_total_times = reshape_data(train_avg_total_times)
     train_avg_agent_times = reshape_data(train_avg_agent_times)
+    test_benefit = reshape_data(test_benefit)
     test_success_rate = reshape_data(test_success_rate)
     
     # Plot graphs
-    labels = ['Vehicles in network', 'Testing success rate', topology]
+    labels = ['Vehicles in network', 'Testing benefit', topology]
     legend = []
     for a in range(len(agents)):
         legend.append(agents[a][0][1])
     
+    makeFigurePlot(
+        n_vehicles, test_benefit, labels=labels, legend=legend)
+    plt.savefig(results_path + labels[1] + '.svg')
+    labels[1] = 'Testing success rate'
     makeFigurePlot(
         n_vehicles, test_success_rate, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
@@ -256,6 +272,7 @@ def parametric_sim_vehicles_train_once(
                        str(train_avg_total_times[a]) + '\n')
         log_file.write("-Training average agent processing times:\n" +
                        str(train_avg_agent_times[a]) + '\n')
+        log_file.write("-Test benefit:\n" + str(test_benefit[a]) + '\n')
         log_file.write("-Test success rate:\n" + str(test_success_rate[a]) +
                        '\n')
     
@@ -268,6 +285,7 @@ def parametric_sim_vehicles_train_once(
     for i in range(len(n_vehicles)):
         log_file.write('\n' + str(n_vehicles[i]) + ',')
         for a in range(len(agents)):
+            log_file.write(str(test_benefit[a][i]) + ',')
             log_file.write(str(test_success_rate[a][i]) + ',')
     
     log_file.close() # Close log file
@@ -295,6 +313,7 @@ def parametric_sim_errorVar_train_per_test(
     # Metrics
     train_avg_total_times = []
     train_avg_agent_times = []
+    test_benefit = []
     test_success_rate = []
     
     # Train and test the agents
@@ -317,6 +336,7 @@ def parametric_sim_errorVar_train_per_test(
         test_results = test_scenario(env, agents)
         train_avg_total_times.append(train_results['train_avg_total_times'])
         train_avg_agent_times.append(train_results['train_avg_agent_times'])
+        test_benefit.append(test_results['test_benefit'])
         test_success_rate.append(test_results['test_success_rate'])
         
         # Delete previous agents so new once can be created (unless fineshed)
@@ -332,6 +352,7 @@ def parametric_sim_errorVar_train_per_test(
     # Reshape data to plot with makeFigurePlot function
     train_avg_total_times = reshape_data(train_avg_total_times)
     train_avg_agent_times = reshape_data(train_avg_agent_times)
+    test_benefit = reshape_data(test_benefit)
     test_success_rate = reshape_data(test_success_rate)
     
     # Plot graphs
@@ -346,6 +367,10 @@ def parametric_sim_errorVar_train_per_test(
     plt.savefig(results_path + labels[1] + '.svg')
     labels[1] = 'Training average agent processing times'
     makeFigurePlot(estimation_err_var, train_avg_agent_times, labels=labels,
+                   legend=legend)
+    plt.savefig(results_path + labels[1] + '.svg')
+    labels[1] = 'Testing benefit'
+    makeFigurePlot(estimation_err_var, test_benefit, labels=labels,
                    legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
     labels[1] = 'Testing success rate'
@@ -379,6 +404,7 @@ def parametric_sim_errorVar_train_per_test(
                        str(train_avg_total_times[a]) + '\n')
         log_file.write("-Training average agent processing times:\n" +
                        str(train_avg_agent_times[a]) + '\n')
+        log_file.write("-Test benefit:\n" + str(test_benefit[a]) + '\n')
         log_file.write("-Test success rate:\n" + str(test_success_rate[a]) +
                        '\n')
     
@@ -396,6 +422,7 @@ def parametric_sim_errorVar_train_per_test(
         for a in range(len(agents)):
             log_file.write(str(train_avg_total_times[a][i]) + ',')
             log_file.write(str(train_avg_agent_times[a][i]) + ',')
+            log_file.write(str(test_benefit[a][i]) + ',')
             log_file.write(str(test_success_rate[a][i]) + ',')
     
     log_file.close() # Close log file
@@ -423,6 +450,7 @@ def parametric_sim_errorVar_train_once(
     # Metrics
     train_avg_total_times = []
     train_avg_agent_times = []
+    test_benefit = []
     test_success_rate = []
     
     # Create RL agents
@@ -450,6 +478,7 @@ def parametric_sim_errorVar_train_once(
         # Test the agents
         test_results = test_scenario(env, agents)
         # Get metrics of tested agents
+        test_benefit.append(test_results['test_benefit'])
         test_success_rate.append(test_results['test_success_rate'])
     
     # Create the directory (if not created) where the data will be stored
@@ -461,14 +490,19 @@ def parametric_sim_errorVar_train_once(
     # Reshape data to plot with makeFigurePlot function
     train_avg_total_times = reshape_data(train_avg_total_times)
     train_avg_agent_times = reshape_data(train_avg_agent_times)
+    test_benefit = reshape_data(test_benefit)
     test_success_rate = reshape_data(test_success_rate)
     
     # Plot graphs
-    labels = ['Vehicles in network', 'Testing success rate', topology]
+    labels = ['Vehicles in network', 'Testing benefit', topology]
     legend = []
     for a in range(len(agents)):
         legend.append(agents[a][0][1])
     
+    makeFigurePlot(
+        n_vehicles, test_success_rate, labels=labels, legend=legend)
+    plt.savefig(results_path + labels[1] + '.svg')
+    labels[1] = 'Testing success rate'
     makeFigurePlot(
         n_vehicles, test_success_rate, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
@@ -500,6 +534,7 @@ def parametric_sim_errorVar_train_once(
                        str(train_avg_total_times[a]) + '\n')
         log_file.write("-Training average agent processing times:\n" +
                        str(train_avg_agent_times[a]) + '\n')
+        log_file.write("-Test benefit:\n" + str(test_benefit[a]) + '\n')
         log_file.write("-Test success rate:\n" + str(test_success_rate[a]) +
                        '\n')
     
@@ -512,6 +547,7 @@ def parametric_sim_errorVar_train_once(
     for i in range(len(estimation_err_var)):
         log_file.write('\n' + str(estimation_err_var[i]) + ',')
         for a in range(len(agents)):
+            log_file.write(str(test_benefit[a][i]) + ',')
             log_file.write(str(test_success_rate[a][i]) + ',')
     
     log_file.close() # Close log file
