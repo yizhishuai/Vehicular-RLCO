@@ -5,7 +5,7 @@ Created on Saturday Feb 12 11:08:57 2022
 @author: Mieszko Ferens
 """
 
-from random import randint
+from random import choice
 
 ### Heuristic algorithms for load distributions
 
@@ -55,16 +55,29 @@ class uniform_distribution_agent:
     This agent selects any of the possible action with uniform probability,
     distributing its decisions and the load equally.
     """
-    def __init__(self, n_actions):
-        self.last_action = n_actions-1
+    def __init__(self, env):
+        self.last_action = env.action_space.n-1
+        self.env = env
     
     def act_and_train(self, obs, reward):
         # Input parameters are ignored since this is not a RL agent
-        return randint(0, self.last_action)
+        # Find the corresponding RSU and MEC node actions (in case there is
+        # multiple) by looking at the path to the cloud node
+        path = self.env.get_path(0)
+        MEC = path[1] - 1
+        RSU = path[2] - 1
+        # Select action randomly
+        return choice([0, MEC, RSU, self.last_action])
     
     def act(self, obs):
         # Input parameter is ignored since this is not a RL agent
-        return randint(0, self.last_action)
+        # Find the corresponding RSU and MEC node actions (in case there is
+        # multiple) by looking at the path to the cloud node
+        path = self.env.get_path(0)
+        MEC = path[1] - 1
+        RSU = path[2] - 1
+        # Select action randomly
+        return choice([0, MEC, RSU, self.last_action])
 
 class max_distance_agent:
     
@@ -73,8 +86,10 @@ class max_distance_agent:
     total delay estimation to distribute the load in the network while
     attempting to reduce delays (the agent basically checks what node can
     process the application in theory going by the order of the furthest nodes
-    first to the closest, i.e. cloud -> MECs -> RSUs -> local vehicle).
+    first to the closest, i.e. cloud -> MEC -> RSU -> local vehicle).
     It doesn't take into account the current load of the nodes.
+    It will not consider MECs or RSUs from other branches than the one the
+    vehicle is in.
     """
     def __init__(self, env):
         self.n_actions = env.action_space.n
@@ -82,9 +97,15 @@ class max_distance_agent:
     
     def act_and_train(self, obs, reward):
         # Input parameters are ignored since this is not a RL agent
+        # Find the corresponding RSU and MEC node actions (in case there is
+        # multiple) by looking at the path to the cloud node
+        path = self.env.get_path(0)
+        MEC = path[1] - 1
+        RSU = path[2] - 1
         # Check starting from the furthest nodes (lowest actions) whether the
-        # estimated delay is under the max tolerable delay
-        for i in range(self.n_actions):
+        # estimated delay is under the max tolerable delay (consider only
+        # current network branch)
+        for i in [0, MEC, RSU, self.n_actions-1]:
             path = self.env.get_path(i) # Get path
             # Check if delay is acceptable
             if(sum(self.env.calc_delays(i, path)) <= self.env.app_max_delay):
@@ -94,9 +115,15 @@ class max_distance_agent:
     
     def act(self, obs):
         # Input parameter is ignored since this is not a RL agent
+        # Find the corresponding RSU and MEC nodes (in case there is multiple)
+        # by looking at the path to the cloud node
+        path = self.env.get_path(0)
+        MEC = path[1]
+        RSU = path[2]
         # Check starting from the furthest nodes (lowest actions) whether the
-        # estimated delay is under the max tolerable delay
-        for i in range(self.n_actions):
+        # estimated delay is under the max tolerable delay (consider only
+        # current network branch)
+        for i in [0, MEC, RSU, self.n_actions-1]:
             path = self.env.get_path(i) # Get path
             # Check if delay is acceptable
             if(sum(self.env.calc_delays(i, path)) <= self.env.app_max_delay):
@@ -113,7 +140,7 @@ def make_heuristic_agents(env):
     agent_cloud_processing = cloud_processing_agent()
     cloud_processing_info = 'Always cloud processing'
     
-    agent_uniform_distribution = uniform_distribution_agent(env.action_space.n)
+    agent_uniform_distribution = uniform_distribution_agent(env)
     uniform_distribution_info = 'Uniform distribution of load'
     
     agent_max_distance = max_distance_agent(env)
