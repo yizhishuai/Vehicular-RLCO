@@ -500,7 +500,7 @@ def parametric_sim_errorVar_train_once(
         legend.append(agents[a][0][1])
     
     makeFigurePlot(
-        n_vehicles, test_success_rate, labels=labels, legend=legend)
+        n_vehicles, test_benefit, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
     labels[1] = 'Testing success rate'
     makeFigurePlot(
