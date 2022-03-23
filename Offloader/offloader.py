@@ -118,7 +118,7 @@ def train_scenario(env, agents):
                             sum(rewards[t-averaging_window:t])
                             /averaging_window)
                 # Show how training progresses
-                if t % 10 == 0:
+                if t % 100 == 0:
                     if(__name__ == "__main__"):
                         print('Time step', t)
                     log_file.write('Time step ' + str(t) + '\n')
@@ -244,6 +244,7 @@ def test_scenario(env, agents):
     # Environment parameters required for testing
     n_apps = len(env.traffic_generator.apps)
     n_nodes = len(env.node_type)
+    vehicle_nodes = env.node_type.count(4)
     
     # Testing
     # Testing benefit (sum of rewards normalized by number of steps)
@@ -283,7 +284,8 @@ def test_scenario(env, agents):
             success_count = [0]*n_apps
             last_app = 0
             t = 0
-            act_distribution = np.zeros((n_apps, n_nodes), dtype=np.float32)
+            act_distribution = np.zeros((n_apps, n_nodes-vehicle_nodes+1),
+                                        dtype=np.float32)
             act_count = [0]*n_apps
             app_count = [0]*n_apps
             app_processed = [0]*n_apps
@@ -440,7 +442,7 @@ def test_scenario(env, agents):
         for batch in range(len(test_act_distribution)):
             legend.append(agents[batch][0][1] + '(best)')
             y_axis.append(test_app_delays[batch][i])
-        bins = 20
+        bins = 100
         max_delay = env.traffic_generator.app_max_delay[i]
         makeFigureHistSubplot(y_axis, bins, labels, legend, max_delay)
         plt.savefig(results_path + labels[2] + '.svg')
@@ -462,7 +464,7 @@ if(__name__ == "__main__"):
             del gym.envs.registration.registry.env_specs[env]
     del env_dict
     
-    env = gym.make('offloading_net:offload-planning-v1')
+    env = gym.make('offloading_net:offload-noplanning-v1')
     env = chainerrl.wrappers.CastObservationToFloat32(env)
     
     ## Agents (using ChainerRL)

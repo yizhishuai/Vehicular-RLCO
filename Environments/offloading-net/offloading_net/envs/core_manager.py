@@ -307,9 +307,21 @@ class core_manager():
                 # Calculate load of the core
                 core_load.append(np.sum(
                     self.slots_duration[node][core])/self.time_limit[node])
-                if(core_load[-1] < 0 or core_load[-1] > 1):
-                    raise KeyboardInterrupt(
-                        "Error: Impresicion detected while updating queues")
+                if(core_load[-1] < 0 or core_load[-1] > 1): # Impresicion
+                    print(
+                        "-----------------\n"
+                        "Warning: Impresicion detected while updating queues\n"
+                        "\nCore Load = " + str(core_load[-1]) +
+                        "\nSlots Start = " +
+                        str(self.slots_start[node][core]) +
+                        "\nSlots Duration = " +
+                        str(self.slots_duration[node][core]) +
+                        "\nReserv Start = " +
+                        str(self.reserv_start[node][core]) +
+                        "\nReserv End = " + str(self.reserv_end[node][core]) +
+                        "\nTotal Est Delay = " +
+                        str(self.total_est_delay[node][core]) +
+                        "\n-----------------")
             # Add core load to observation
             obs = np.append(obs, np.array(core_load, dtype=np.float32))
         

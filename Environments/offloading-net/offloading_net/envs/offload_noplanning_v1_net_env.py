@@ -17,11 +17,12 @@ from gym import spaces
 from .traffic_generator import traffic_generator
 from .core_manager import core_manager
 from .parameters import (links, links_rate, links_delay, node_type, node_clock,
-                         node_cores, n_nodes, net_nodes, n_vehicles, all_paths,
-                         node_comb, apps, app_cost, app_data_in, app_data_out,
-                         app_max_delay, app_rate, app_benefit, app_info,
-                         estimation_err_var, upper_var_limit, lower_var_limit,
-                         node_buffer, reserv_limit, topology_label)
+                         node_cores, n_nodes, net_nodes, vehicle_nodes,
+                         n_vehicles, all_paths, node_comb, apps, app_cost,
+                         app_data_in, app_data_out, app_max_delay, app_rate,
+                         app_benefit, app_info, estimation_err_var,
+                         upper_var_limit, lower_var_limit, node_buffer,
+                         reserv_limit, topology_label)
 
 """
 Explanation on implemented discrete event simulator:
@@ -134,7 +135,7 @@ class offload_noplanning_v1_netEnv(gym.Env):
         # The observation space has an element per core in the network (with
         # the exception of vehicles, where only one is observable at a time)
         self.observation_space = spaces.Box(low=0, high=1, shape=(
-            self.n_cores + self.app_param_count + net_nodes + 1, 1),
+            self.n_cores + self.app_param_count + n_nodes + 1, 1),
             dtype=np.float32)
         
         self.action_space = spaces.Discrete(net_nodes + 1)
@@ -167,7 +168,7 @@ class offload_noplanning_v1_netEnv(gym.Env):
         if(action): # Not cloud
             if(action == net_nodes): # Process locally
                 node_index = (net_nodes-1 + self.app_shift +
-                              (action-net_nodes)*self.node_vehicles)
+                              (self.app_origin-net_nodes-1)*self.node_vehicles)
             else: # Process in network
                 node_index = action - 1
             self.total_delay_est = self.core_manager.reserve_no_planning(
@@ -201,7 +202,7 @@ class offload_noplanning_v1_netEnv(gym.Env):
         ## Observation calculation
         # Calculate the next relevant vehicle index
         vehicle_index = (net_nodes-1 + self.app_shift +
-                      (self.app_origin-net_nodes-1)*self.node_vehicles)
+                         (self.app_origin-net_nodes-1)*self.node_vehicles)
         
         # Core and processed applications information
         self.obs, total_delays, app_types = (
@@ -258,16 +259,21 @@ class offload_noplanning_v1_netEnv(gym.Env):
                 sum(self.calc_delays(action, path))/self.app_max_delay, 1))
         self.obs = np.append(
             self.obs, np.array(predict_delay, dtype=np.float32))
-
+        
+        # Add current vehicle's position to the observation
+        vehicle_pos = [0]*vehicle_nodes
+        vehicle_pos[self.app_origin-net_nodes-1] = 1
+        self.obs = np.append(self.obs, np.array(vehicle_pos, dtype=np.float32))
+        
         done = False # This environment is continuous and is never done
-
+        
         return np.array([self.obs, reward, done, ""], dtype=object)
 
     def reset(self):
         
         # Define the number of vehicles per vehicle node (rounded to the
         # nearest integer) - Even distribution
-        self.node_vehicles = round(self.n_vehicles/self.node_type.count(4))
+        self.node_vehicles = round(self.n_vehicles/vehicle_nodes)
         
         # Reset and create all cores
         self.core_manager.reset(n_nodes, node_cores, self.node_vehicles,
@@ -290,27 +296,24 @@ class offload_noplanning_v1_netEnv(gym.Env):
         
         # Calculate observation
         self.obs = np.array(
-            [0]*(self.n_cores + self.app_param_count + net_nodes + 1),
+            [0]*(self.n_cores + self.app_param_count + n_nodes + 1),
             dtype=np.float32)
         
         return self.obs
 
     def render(self, mode='human'):
         # Print current core reservation times
-        #print('Core reservation time:', self.obs[0:self.n_cores])
         info = 'Core reservation time: ' + str(self.obs[0:self.n_cores])
         # Print next application to be processed
-        #print('Next application:', self.app)
         info = info + '\n' + 'Next application: ' + str(self.app)
+        # Print origin vehicle node
+        info = info + '\n' + 'From vehicle node: ' + str(self.app_origin)
         # Print application related observation
-        #print('Application info: ' +
-        #      str(self.obs[self.n_cores:self.n_cores+self.app_param_count]))
         info = (info + '\n' + 'Application info: ' +
                 str(self.obs[self.n_cores:self.n_cores+self.app_param_count]))
         # Print delay prediction
-        #print('Delay prediction: ' + str(self.obs[-(net_nodes+1):]))
         info = (info + '\n' + 'Delay prediction: ' +
-                str(self.obs[-(net_nodes+1):]))
+                str(self.obs[-(net_nodes+1+vehicle_nodes):-vehicle_nodes]))
         
         return info
     

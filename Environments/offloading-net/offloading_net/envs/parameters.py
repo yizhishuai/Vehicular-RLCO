@@ -15,8 +15,10 @@ path_to_env = '../Environments/offloading-net/offloading_net/envs/'
 
 ## Network topology
 
-topologies = ["network_branchless", "network_branchless_v2"]
-topology_labels = ["Branchless network", "Branchless network v2"]
+topologies = ["network_branchless", "network_branchless_v2",
+              "network_Valladolid"]
+topology_labels = ["Branchless network", "Branchless network v2",
+                   "Valladolid's network"]
 
 # Choose network topology
 try:
@@ -24,7 +26,7 @@ try:
     topology = state_file.read() # Defined from main
     state_file.close()
 except:
-    topology = 'network_branchless' # Default for single simulation testing
+    topology = 'network_branchless_v2' # Default for single simulation testing
 
 topology_label = topology_labels[topologies.index(topology)]
 
@@ -59,9 +61,11 @@ app_rate = data['rate'].values.tolist()
 app_benefit = data['benefit'].values.tolist()
 app_info = data['info'].values.tolist()
 
-# Count network nodes (with and without vehicles, marked as type 4)
+# Count network nodes (with and without vehicles, marked as type 4) and vehicle
+# nodes
 n_nodes = len(node_type)
 net_nodes = sum(map(lambda x : x<4, node_type))
+vehicle_nodes = n_nodes - net_nodes
 
 # Define the default number of total vehicles in the network (each vehicle
 # node can represent multiple vehicles)
