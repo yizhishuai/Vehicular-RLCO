@@ -21,7 +21,7 @@ def makeFigurePlot(x_axis, y_axis, optimal=None, labels=[], legend=[],
         line_styles.insert(0, '--')
         y_axis.insert(0, [optimal]*len(x_axis))
         if(legend != []):
-            legend.insert(0, 'Optimal cost')
+            legend.insert(0, 'Optimal')
     else:
         line_styles = (['-']*len(y_axis))
     
@@ -73,7 +73,7 @@ def makeFigureHistSubplot(y_axis, bins=10, labels=[], legend=[], thresh=None):
     for hist in range(len(y_axis)):
         plt.subplot(len(y_axis), 1, hist+1)
         plt.hist(y_axis[hist])
-        # Add threshhold line
+        # Add threshhold line #TODO (issue with bar visualization)
         #if(thresh):
             #plt.xlim([-5 , max(y_axis[hist] + [thresh]) + 10])
             #plt.axvline(thresh, color='k', linestyle='--')

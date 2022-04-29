@@ -25,8 +25,10 @@ from heuristic_algorithms import make_heuristic_agents
 from graph_creator import makeFigurePlot
 
 # Defined topologies
-topologies = ["network_branchless", "network_branchless_v2"]
-topology_labels = ["Branchless network", "Branchless network v2"]
+topologies = ["network_branchless", "network_branchless_v2",
+              "network_Valladolid"]
+topology_labels = ["Branchless network", "Branchless network v2",
+                   "Valladolid's network"]
 
 # Function for parametric simulation of number of vehicles (train per test)
 def parametric_sim_vehicles_train_per_test(
@@ -66,8 +68,8 @@ def parametric_sim_vehicles_train_per_test(
         # Add heuristic algorithms imitating RL agents to the training for
         # benchmarks
         heuristic_agents = make_heuristic_agents(env)
-        for i in range(len(heuristic_agents)):
-            agents.insert(0, [heuristic_agents[i]])
+        for j in range(len(heuristic_agents)):
+            agents.insert(0, [heuristic_agents[j]])
         
         # Get metrics of trained and tested agents
         train_results = train_scenario(env, agents)
@@ -77,8 +79,8 @@ def parametric_sim_vehicles_train_per_test(
         test_benefit.append(test_results['test_benefit'])
         test_success_rate.append(test_results['test_success_rate'])
         
-        # Delete previous agents so new once can be created (unless fineshed)
-        if(not i == len(n_vehicles) - 1):
+        # Delete previous agents so new once can be created (unless finished)
+        if(i < len(n_vehicles) - 1):
             del agents
     
     # Create the directory (if not created) where the data will be stored
@@ -328,8 +330,8 @@ def parametric_sim_errorVar_train_per_test(
         # Add heuristic algorithms imitating RL agents to the training for
         # benchmarks
         heuristic_agents = make_heuristic_agents(env)
-        for i in range(len(heuristic_agents)):
-            agents.insert(0, [heuristic_agents[i]])
+        for j in range(len(heuristic_agents)):
+            agents.insert(0, [heuristic_agents[j]])
         
         # Get metrics of trained and tested agents
         train_results = train_scenario(env, agents)
@@ -339,8 +341,8 @@ def parametric_sim_errorVar_train_per_test(
         test_benefit.append(test_results['test_benefit'])
         test_success_rate.append(test_results['test_success_rate'])
         
-        # Delete previous agents so new once can be created (unless fineshed)
-        if(not i == len(n_vehicles) - 1):
+        # Delete previous agents so new once can be created (unless finished)
+        if(i < len(estimation_err_var) - 1):
             del agents
     
     # Create the directory (if not created) where the data will be stored
@@ -356,7 +358,7 @@ def parametric_sim_errorVar_train_per_test(
     test_success_rate = reshape_data(test_success_rate)
     
     # Plot graphs
-    labels = ['Processing time error variance', 'Training average total times',
+    labels = ['Variation coeficient', 'Training average total times',
               topology]
     legend = []
     for a in range(len(agents)):
@@ -471,7 +473,7 @@ def parametric_sim_errorVar_train_once(
     train_avg_agent_times.append(train_results['train_avg_agent_times'])
     
     # Test the agents
-    for i in range(len(n_vehicles)):
+    for i in range(len(estimation_err_var)):
         # Vary network load parameters
         env.set_error_var(estimation_err_var[i])
         
@@ -500,11 +502,11 @@ def parametric_sim_errorVar_train_once(
         legend.append(agents[a][0][1])
     
     makeFigurePlot(
-        n_vehicles, test_benefit, labels=labels, legend=legend)
+        estimation_err_var, test_benefit, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
     labels[1] = 'Testing success rate'
     makeFigurePlot(
-        n_vehicles, test_success_rate, labels=labels, legend=legend)
+        estimation_err_var, test_success_rate, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
     
     plt.close('all') # Close all figures
