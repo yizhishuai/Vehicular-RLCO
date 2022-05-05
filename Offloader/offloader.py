@@ -464,7 +464,7 @@ if(__name__ == "__main__"):
             del gym.envs.registration.registry.env_specs[env]
     del env_dict
     
-    env = gym.make('offloading_net:offload-noplanning-v1')
+    env = gym.make('offloading_net:offload-planning-v1')
     env = chainerrl.wrappers.CastObservationToFloat32(env)
     
     ## Agents (using ChainerRL)
@@ -474,7 +474,7 @@ if(__name__ == "__main__"):
     gammas = 0.995
     
     # Algorithms to be used
-    alg = ['DDQN']
+    alg = ['DDQN', 'SARSA', 'PAL', 'TRPO']
     
     # Explorations that are to be analized (in algorithms that use them)
     explorators = 'const'

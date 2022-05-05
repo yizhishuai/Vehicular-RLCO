@@ -12,7 +12,11 @@ import numpy as np
 class core_manager():
     
     def __init__(self, error_var, upper_var_limit, lower_var_limit,
-                 reserv_limit):
+                 reserv_limit, precision_limit, precision_margin):
+        
+        # Precision limit and margin
+        self.precision_limit = precision_limit
+        self.precision_margin = precision_margin
         
         # Number of network nodes which the class store information of
         self.net_nodes = 0
@@ -140,21 +144,26 @@ class core_manager():
         # Assign the reservation to the first available time slot
         # If arrival of data is prior to slot's start
         start_time = 0
-        if(forward_delay <= self.slots_start[action][core][slot]):
+        if(forward_delay < self.slots_start[action][core][slot] or
+           self.isEqual(forward_delay, self.slots_start[action][core][slot])):
             # Register the reservation's start time
             self.reserv_start[action][core] = np.sort(np.append(
                 self.reserv_start[action][core],
                 self.slots_start[action][core][slot]))
             start_time = self.slots_start[action][core][slot]
             # Shorten the slot
-            self.slots_start[action][core][slot] += proc_delay
-            self.slots_duration[action][core][slot] -= proc_delay
+            self.slots_start[action][core][slot] = np.around(
+                self.slots_start[action][core][slot] + proc_delay,
+                self.precision_limit)
+            self.slots_duration[action][core][slot] = np.around(
+                self.slots_duration[action][core][slot] - proc_delay,
+                self.precision_limit)
             # Register the reservation's end time
             self.reserv_end[action][core] = np.sort(np.append(
                 self.reserv_end[action][core],
                 self.slots_start[action][core][slot]))
             # Delete the slot if it is null (unless it is the end of the queue)
-            if(self.slots_duration[action][core][slot] == 0 and
+            if(self.isEqual(self.slots_duration[action][core][slot], 0) and
                len(self.slots_start[action][core]) - 1 != slot):
                 self.slots_start[action][core] = np.delete(
                     self.slots_start[action][core], slot)
@@ -176,18 +185,21 @@ class core_manager():
                 self.slots_start[action][core][slot])
             self.slots_duration[action][core] = np.insert(
                 self.slots_duration[action][core], slot,
-                forward_delay - self.slots_start[action][core][slot])
+                np.around(forward_delay - self.slots_start[action][core][slot],
+                          self.precision_limit))
             # Shorten the old slot
-            self.slots_start[action][core][slot+1] = (
-                forward_delay + proc_delay)
-            self.slots_duration[action][core][slot+1] -= (
-                self.slots_duration[action][core][slot] + proc_delay)
+            self.slots_start[action][core][slot+1] = np.around(
+                forward_delay + proc_delay, self.precision_limit)
+            self.slots_duration[action][core][slot+1] = np.around(
+                self.slots_duration[action][core][slot+1] -
+                (self.slots_duration[action][core][slot] + proc_delay),
+                self.precision_limit)
             # Register the reservation's end time
             self.reserv_end[action][core] = np.sort(np.append(
                 self.reserv_end[action][core],
                 self.slots_start[action][core][slot+1]))
             # Delete the slot if it is null (unless it is the end of the queue)
-            if(self.slots_duration[action][core][slot+1] == 0 and
+            if(self.isEqual(self.slots_duration[action][core][slot+1], 0) and
                len(self.slots_start[action][core]) - 1 != slot+1):
                 self.slots_start[action][core] = np.delete(
                     self.slots_start[action][core], slot+1)
@@ -208,7 +220,7 @@ class core_manager():
         
         return total_est_delay
     
-    def update_and_calc_obs(self, app_time, precision_limit, obs_vehicle):
+    def update_and_calc_obs(self, app_time, obs_vehicle):
         
         ## Observation and total real delays calculation
         obs = np.array([], dtype=np.float32)
@@ -226,14 +238,25 @@ class core_manager():
                 
                 # Check update time for this core
                 app_time = np.around(
-                    self.update_time[node][core], precision_limit)
-                self.update_time[node][core] = 0
+                    self.update_time[node][core], self.precision_limit)
+                self.update_time[node][core] = np.float64(0)
                 
                 # As time passes the core's queue advances
                 self.slots_start[node][core] -= app_time
-                self.slots_duration[node][core][-1] += app_time
+                self.slots_start[node][core].round(
+                    decimals=self.precision_limit,
+                    out=self.slots_start[node][core])
+                self.slots_duration[node][core][-1] = np.around(
+                    self.slots_duration[node][core][-1] + app_time,
+                    self.precision_limit)
                 self.reserv_start[node][core] -= app_time
+                self.reserv_start[node][core].round(
+                    decimals=self.precision_limit,
+                    out=self.reserv_start[node][core])
                 self.reserv_end[node][core] -= app_time
+                self.reserv_end[node][core].round(
+                    decimals=self.precision_limit,
+                    out=self.reserv_start[node][core])
                 
                 # Check if any reservation started processing
                 started = len(np.where(self.reserv_start[node][core] < 0)[0])
@@ -252,8 +275,7 @@ class core_manager():
                     if(self.reserv_start[node][core][i] >= 0):
                         break
                     
-                    self.process_and_update_queue(i, node, core, app_time,
-                                                  precision_limit)
+                    self.process_and_update_queue(i, node, core, app_time)
                 
                 # Check if any reservation has been canceled
                 canceled = len(np.where(
@@ -293,9 +315,9 @@ class core_manager():
                 for i in reversed(loop):
                     diff = np.around(self.slots_duration[node][core][i] +
                                      self.slots_start[node][core][i],
-                                     precision_limit)
+                                     self.precision_limit)
                     if(diff > 0): # If there is still time remaining
-                        self.slots_start[node][core][i] = 0
+                        self.slots_start[node][core][i] = np.float64(0)
                         self.slots_duration[node][core][i] = diff
                     else: # If the slot is over (all prior slots too)
                         self.slots_start[node][core] = np.delete(
@@ -377,8 +399,7 @@ class core_manager():
                     self.time_limit = np.append(
                         self.time_limit, np.float64(node_buffer[a]))
     
-    def process_and_update_queue(self, i, node, core, app_time,
-                                 precision_limit):
+    def process_and_update_queue(self, i, node, core, app_time):
         """
         Update the queue taking into account the random time variation in the
         processing of applications
@@ -390,29 +411,37 @@ class core_manager():
         var = np.around(min(
             var, (self.reserv_end[node][core][i] -
                   self.reserv_start[node][core][i]) * self.upper_var_limit),
-            precision_limit)
+            self.precision_limit)
         var = np.around(max(
             var, - (self.reserv_end[node][core][i] -
                     self.reserv_start[node][core][i]) * self.lower_var_limit),
-            precision_limit)
+            self.precision_limit)
         
         # Next adjacent time slot (if it exists)
-        slot = np.where(self.slots_start[node][core] ==
-                        self.reserv_end[node][core][i])
+        slot = np.where(self.isEqual(self.slots_start[node][core],
+                                     self.reserv_end[node][core][i]))
         # Next time slot (must exist)
-        next_slot = np.where(self.slots_start[node][core] >=
-                             self.reserv_end[node][core][i])
+        if(len(slot[0])):
+            next_slot = slot
+        else:
+            next_slot = np.where(self.slots_start[node][core] >
+                                 self.reserv_end[node][core][i])
         
         # Update reservation
-        self.reserv_end[node][core][i] += var
-        self.total_est_delay[node][core][i] += var
+        self.reserv_end[node][core][i] = np.around(
+            self.reserv_end[node][core][i] + var, self.precision_limit)
+        self.total_est_delay[node][core][i] = max(np.float64(0), np.around(
+            self.total_est_delay[node][core][i] + var, self.precision_limit))
         
         # If the processing took shorter than expected
         if(var < 0):
             # Update the adjacent time slot if it exists
             if(len(slot[0])):
-                self.slots_start[node][core][slot[0][0]] += var
-                self.slots_duration[node][core][slot[0][0]] -= var
+                self.slots_start[node][core][slot[0][0]] = (
+                    self.reserv_end[node][core][i])
+                self.slots_duration[node][core][slot[0][0]] = np.around(
+                    self.slots_duration[node][core][slot[0][0]] - var,
+                    self.precision_limit)
             else:
                 self.slots_start[node][core] = np.insert(
                     self.slots_start[node][core], next_slot[0][0],
@@ -422,13 +451,15 @@ class core_manager():
         elif(var > 0): # If the processing took longer than expected
             while(1): # This loop has to reach a break line
                 # Check that the queue is still within limits
-                if(self.reserv_end[node][core][i] > self.time_limit[node]):
+                if(self.reserv_end[node][core][i] > self.time_limit[node] or
+                   self.isEqual(self.reserv_end[node][core][i],
+                                self.time_limit[node])):
                     self.slots_start[node][core][-1] = (
                         self.reserv_start[node][core][i])
-                    self.slots_duration[node][core][-1] = (
+                    self.slots_duration[node][core][-1] = np.around(
                         self.time_limit[node] -
-                        self.reserv_start[node][core][i])
-                    self.total_est_delay[node][core][i::] = -1
+                        self.reserv_start[node][core][i], self.precision_limit)
+                    self.total_est_delay[node][core][i::] = np.float64(-1)
                     self.queue_limit[node][core] += len(
                         range(i, len(self.reserv_start[node][core])))
                     self.reserv_end[node][core] = np.delete(
@@ -449,39 +480,71 @@ class core_manager():
                 # Update the adjancent time slot if it exists
                 if(len(slot[0])):
                     # Check if the slot can handle the increase in time
-                    if(self.slots_duration[node][core][slot[0][0]] > var):
-                        self.slots_start[node][core][slot[0][0]] += var
-                        self.slots_duration[node][core][slot[0][0]] -= var
+                    if(self.isEqual(
+                            self.slots_duration[node][core][slot[0][0]], var)):
+                        # Don't delete the slot if it is the last one
+                        if(len(self.slots_start[node][core]) -1 == slot[0][0]):
+                            self.slots_start[node][core][-1] = (
+                                self.time_limit[node])
+                            self.slots_duration[node][core][-1] = np.float64(0)
+                        else: # Delete if it isn't the last one
+                            self.slots_start[node][core] = np.delete(
+                                self.slots_start[node][core], slot[0][0])
+                            self.slots_duration[node][core] = np.delete(
+                                self.slots_duration[node][core], slot[0][0])
                         break
-                    elif(self.slots_duration[node][core][slot[0][0]] == var):
-                        self.slots_start[node][core] = np.delete(
-                            self.slots_start[node][core], slot[0][0])
-                        self.slots_duration[node][core] = np.delete(
-                            self.slots_duration[node][core], slot[0][0])
+                    elif(self.slots_duration[node][core][slot[0][0]] > var):
+                        self.slots_start[node][core][slot[0][0]] = (
+                            self.reserv_end[node][core][i])
+                        self.slots_duration[node][core][slot[0][0]] = (
+                            np.around(
+                                self.slots_duration[node][core][slot[0][0]] -
+                                var, self.precision_limit))
                         break
                     else: # If not, delete and update remaining time
-                        var -= self.slots_duration[node][core][slot[0][0]]
-                        self.slots_start[node][core] = np.delete(
-                            self.slots_start[node][core], slot[0][0])
-                        self.slots_duration[node][core] = np.delete(
-                            self.slots_duration[node][core], slot[0][0])
+                        var = np.around(
+                            var - self.slots_duration[node][core][slot[0][0]],
+                            self.precision_limit)
+                        # Don't delete the slot if it is the last one
+                        if(len(self.slots_start[node][core]) -1 == slot[0][0]):
+                            self.slots_start[node][core][-1] = (
+                                self.time_limit[node])
+                            self.slots_duration[node][core][-1] = np.float64(0)
+                        else: # Delete if it isn't the last one
+                            self.slots_start[node][core] = np.delete(
+                                self.slots_start[node][core], slot[0][0])
+                            self.slots_duration[node][core] = np.delete(
+                                self.slots_duration[node][core], slot[0][0])
+                
                 # Move on to the next reservation
                 i += 1
                 # Next adjacent time slot (if it exists)
-                slot = np.where(self.slots_start[node][core] ==
-                                self.reserv_end[node][core][i])
+                slot = np.where(self.isEqual(self.slots_start[node][core],
+                                             self.reserv_end[node][core][i]))
                 # Next time slot (must exist)
-                next_slot = np.where(self.slots_start[node][core] >=
-                                     self.reserv_end[node][core][i])
+                if(len(slot[0])):
+                    next_slot = slot
+                else:
+                    next_slot = np.where(self.slots_start[node][core] >
+                                         self.reserv_end[node][core][i])
                 # Update reservation
-                self.reserv_start[node][core][i] += var
-                self.reserv_end[node][core][i] += var
-                self.total_est_delay[node][core][i] += var
+                self.reserv_start[node][core][i] = np.around(
+                    self.reserv_start[node][core][i] + var,
+                    self.precision_limit)
+                self.reserv_end[node][core][i] = np.around(
+                    self.reserv_end[node][core][i] + var, self.precision_limit)
+                self.total_est_delay[node][core][i] = max(
+                    np.float64(0), np.around(
+                        self.total_est_delay[node][core][i] + var,
+                        self.precision_limit))
                 
                 # Security check to avoid infinite loop
                 if(i > self.reserv_limit):
                     raise KeyboardInterrupt(
                         "Trouble while updating a core queue!")
+    
+    def isEqual(self, a, b):
+        return np.isclose(a, b, rtol=0, atol=self.precision_margin)
     
     def set_error_var(self, error_var):
         self.error_var = error_var

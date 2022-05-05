@@ -63,6 +63,7 @@ class offload_planning_v0_netEnv(gym.Env):
         # Precision limit (in number of decimals) for numpy.float64 variables
         # used to avoid overflow when operating with times in the simulator
         self.precision_limit = 10 # Numpy.float64 has 15 decimals
+        self.precision_margin = 1.1e-10 # Margin for comparing floating point
         
         # Topology name (used as information for metrics for logging)
         self.topology_label = topology_label
@@ -130,7 +131,9 @@ class offload_planning_v0_netEnv(gym.Env):
         
         # Discrete event simulator core manager initialization
         self.core_manager = core_manager(estimation_err_var, upper_var_limit,
-                                         lower_var_limit, reserv_limit)
+                                         lower_var_limit, reserv_limit,
+                                         self.precision_limit,
+                                         self.precision_margin)
         
         # The observation space has an element per core in the network (with
         # the exception of vehicles, where only one is observable at a time)
@@ -207,7 +210,7 @@ class offload_planning_v0_netEnv(gym.Env):
         # Core and processed applications information
         self.obs, total_delays, app_types = (
             self.core_manager.update_and_calc_obs(
-                self.app_time, self.precision_limit, vehicle_index))
+                self.app_time, vehicle_index))
         
         self.total_delays = np.append(self.total_delays, total_delays)
         self.app_types = np.append(self.app_types, app_types)
