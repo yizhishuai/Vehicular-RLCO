@@ -358,7 +358,7 @@ def parametric_sim_errorVar_train_per_test(
     test_success_rate = reshape_data(test_success_rate)
     
     # Plot graphs
-    labels = ['Variation coeficient', 'Training average total times',
+    labels = ['Variation coefficient', 'Training average total times',
               topology]
     legend = []
     for a in range(len(agents)):
@@ -496,7 +496,7 @@ def parametric_sim_errorVar_train_once(
     test_success_rate = reshape_data(test_success_rate)
     
     # Plot graphs
-    labels = ['Vehicles in network', 'Testing benefit', topology]
+    labels = ['Variation coefficient', 'Testing benefit', topology]
     legend = []
     for a in range(len(agents)):
         legend.append(agents[a][0][1])
