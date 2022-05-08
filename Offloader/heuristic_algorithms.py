@@ -135,16 +135,16 @@ class max_distance_agent:
 def make_heuristic_agents(env):
     
     agent_local_processing = local_processing_agent(env.action_space.n)
-    local_processing_info = 'Always local processing'
+    local_processing_info = 'Heuristic LP'
     
     agent_cloud_processing = cloud_processing_agent()
-    cloud_processing_info = 'Always cloud processing'
+    cloud_processing_info = 'Heuristic CP'
     
     agent_uniform_distribution = uniform_distribution_agent(env)
-    uniform_distribution_info = 'Uniform distribution of load'
+    uniform_distribution_info = 'Heuristic UDP'
     
     agent_max_distance = max_distance_agent(env)
-    max_distance_info = 'Max distance processing'
+    max_distance_info = 'Heuristic MDP'
     
     return [[agent_local_processing, local_processing_info],
             [agent_cloud_processing, cloud_processing_info],

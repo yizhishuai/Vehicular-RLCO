@@ -435,7 +435,7 @@ def test_scenario(env, agents):
     
     # Create histogram of delays of each application (only best agents)
     for i in range(n_apps):
-        labels = ['Total application delay', '',
+        labels = ['Total application delay (ms)', '',
                   env.traffic_generator.app_info[i]]
         legend = []
         y_axis = []

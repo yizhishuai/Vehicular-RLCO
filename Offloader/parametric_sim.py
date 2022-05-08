@@ -96,7 +96,7 @@ def parametric_sim_vehicles_train_per_test(
     test_success_rate = reshape_data(test_success_rate)
     
     # Plot graphs
-    labels = ['Vehicles in network', 'Training average total times',
+    labels = ['Vehicles in network', 'Training average total times (s)',
               topology]
     legend = []
     for a in range(len(agents)):
@@ -105,7 +105,7 @@ def parametric_sim_vehicles_train_per_test(
     makeFigurePlot(
         n_vehicles, train_avg_total_times, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
-    labels[1] = 'Training average agent processing times'
+    labels[1] = 'Training average agent processing times (s)'
     makeFigurePlot(
         n_vehicles, train_avg_agent_times, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
@@ -113,7 +113,7 @@ def parametric_sim_vehicles_train_per_test(
     makeFigurePlot(
         n_vehicles, test_benefit, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
-    labels[1] = 'Testing success rate'
+    labels[1] = 'Testing success rate (/1)'
     makeFigurePlot(
         n_vehicles, test_success_rate, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
@@ -242,7 +242,7 @@ def parametric_sim_vehicles_train_once(
     makeFigurePlot(
         n_vehicles, test_benefit, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
-    labels[1] = 'Testing success rate'
+    labels[1] = 'Testing success rate (/1)'
     makeFigurePlot(
         n_vehicles, test_success_rate, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
@@ -358,7 +358,7 @@ def parametric_sim_errorVar_train_per_test(
     test_success_rate = reshape_data(test_success_rate)
     
     # Plot graphs
-    labels = ['Variation coefficient', 'Training average total times',
+    labels = ['Variation coefficient', 'Training average total times (s)',
               topology]
     legend = []
     for a in range(len(agents)):
@@ -367,7 +367,7 @@ def parametric_sim_errorVar_train_per_test(
     makeFigurePlot(estimation_err_var, train_avg_total_times, labels=labels,
                    legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
-    labels[1] = 'Training average agent processing times'
+    labels[1] = 'Training average agent processing times (s)'
     makeFigurePlot(estimation_err_var, train_avg_agent_times, labels=labels,
                    legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
@@ -375,7 +375,7 @@ def parametric_sim_errorVar_train_per_test(
     makeFigurePlot(estimation_err_var, test_benefit, labels=labels,
                    legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
-    labels[1] = 'Testing success rate'
+    labels[1] = 'Testing success rate (/1)'
     makeFigurePlot(estimation_err_var, test_success_rate, labels=labels,
                    legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
@@ -504,7 +504,7 @@ def parametric_sim_errorVar_train_once(
     makeFigurePlot(
         estimation_err_var, test_benefit, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
-    labels[1] = 'Testing success rate'
+    labels[1] = 'Testing success rate (/1)'
     makeFigurePlot(
         estimation_err_var, test_success_rate, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
@@ -606,7 +606,7 @@ if(__name__ == "__main__"):
     
     train_est_err_var = 0
     default_est_err_var = 0
-    estimation_err_var = [1]
+    estimation_err_var = [0, 0.5, 1, 1.5, 2]
     
     upper_var_limit = 1
     lower_var_limit = 0
@@ -618,7 +618,7 @@ if(__name__ == "__main__"):
     gammas = 0.995
     
     # Algorithms to be used
-    alg = ['DDQN','TRPO']
+    alg = ['DDQN','SARSA','PAL','TRPO']
     
     # Explorations that are to be analized (in algorithms that use them)
     explorators = 'const'
@@ -628,7 +628,6 @@ if(__name__ == "__main__"):
     repetitions = 1
     
     # Run simulation
-    """
     parametric_sim_vehicles_train_per_test(
         env, env.topology_label, n_vehicles, default_est_err_var,
         upper_var_limit, lower_var_limit, gammas=gammas, alg=alg,
@@ -644,7 +643,7 @@ if(__name__ == "__main__"):
         env, env.topology_label, default_vehicles, estimation_err_var,
         upper_var_limit, lower_var_limit, gammas=gammas, alg=alg,
         explorators=explorators, epsilons=epsilons, repetitions=repetitions)
-    """
+    
     parametric_sim_errorVar_train_once(
         env, env.topology_label, default_vehicles, estimation_err_var,
         train_est_err_var, upper_var_limit, lower_var_limit, gammas=gammas,
