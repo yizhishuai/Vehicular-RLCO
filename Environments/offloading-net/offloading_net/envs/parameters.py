@@ -16,9 +16,9 @@ path_to_env = '../Environments/offloading-net/offloading_net/envs/'
 ## Network topology
 
 topologies = ["network_branchless", "network_branchless_v2",
-              "network_Valladolid"]
+              "network_branched"]
 topology_labels = ["Branchless network", "Branchless network v2",
-                   "Valladolid's network"]
+                   "Branched network"]
 
 # Choose network topology
 try:
@@ -72,7 +72,7 @@ vehicle_nodes = n_nodes - net_nodes
 n_vehicles = 50
 
 # Default variation coeficient of error in estimation of processing time
-estimation_err_var = 2
+estimation_err_var = 1
 # Limits to variation of times
 upper_var_limit = 1 # Percentage out of corresponding total time
 lower_var_limit = 0 # Percentage out of corresponding total time

@@ -26,9 +26,9 @@ from graph_creator import makeFigurePlot
 
 # Defined topologies
 topologies = ["network_branchless", "network_branchless_v2",
-              "network_Valladolid"]
+              "network_branched"]
 topology_labels = ["Branchless network", "Branchless network v2",
-                   "Valladolid's network"]
+                   "Branched network"]
 
 # Function for parametric simulation of number of vehicles (train per test)
 def parametric_sim_vehicles_train_per_test(
@@ -570,7 +570,7 @@ if(__name__ == "__main__"):
     ## Setup simulation state in temporal file (used for creating the
     ## appropriate environment, i.e. using the correct network topology)
     
-    top_index = 0 # Pick one index of the above
+    top_index = 2 # Pick one index of the above
     
     ## Define what is the current network topology for simulation in state file
     try:
@@ -592,7 +592,7 @@ if(__name__ == "__main__"):
     del env_dict
     
     ## Environment (using gym)
-    env = gym.make('offloading_net:offload-v0')
+    env = gym.make('offloading_net:offload-planning-v1')
     env = chainerrl.wrappers.CastObservationToFloat32(env)
     
     # Remove temporary file so it's not read in other simulations
@@ -602,14 +602,14 @@ if(__name__ == "__main__"):
     # Simulation parameters
     train_vehicles = 50
     default_vehicles = 50
-    n_vehicles = [10, 30, 50]
+    n_vehicles = [10, 30, 50, 70, 90]
     
     train_est_err_var = 0
     default_est_err_var = 0
-    estimation_err_var = [0, 0.5, 1]
+    estimation_err_var = [1]
     
-    upper_var_limit = 0.5
-    lower_var_limit = 0.5
+    upper_var_limit = 1
+    lower_var_limit = 0
     
     ## Default agents parameters
     # Discount factors
@@ -627,7 +627,8 @@ if(__name__ == "__main__"):
     # Define the number of replicas
     repetitions = 1
     
-    # Run simulations
+    # Run simulation
+    """
     parametric_sim_vehicles_train_per_test(
         env, env.topology_label, n_vehicles, default_est_err_var,
         upper_var_limit, lower_var_limit, gammas=gammas, alg=alg,
@@ -643,7 +644,7 @@ if(__name__ == "__main__"):
         env, env.topology_label, default_vehicles, estimation_err_var,
         upper_var_limit, lower_var_limit, gammas=gammas, alg=alg,
         explorators=explorators, epsilons=epsilons, repetitions=repetitions)
-    
+    """
     parametric_sim_errorVar_train_once(
         env, env.topology_label, default_vehicles, estimation_err_var,
         train_est_err_var, upper_var_limit, lower_var_limit, gammas=gammas,
