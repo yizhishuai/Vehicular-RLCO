@@ -113,7 +113,7 @@ def parametric_sim_vehicles_train_per_test(
     makeFigurePlot(
         n_vehicles, test_benefit, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
-    labels[1] = 'Testing success rate (/1)'
+    labels[1] = 'Testing success rate (%)'
     makeFigurePlot(
         n_vehicles, test_success_rate, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
@@ -146,7 +146,7 @@ def parametric_sim_vehicles_train_per_test(
                        str(train_avg_agent_times[a]) + '\n')
         log_file.write("-Test benefit:\n" + str(test_benefit[a]) + '\n')
         log_file.write("-Test success rate:\n" + str(test_success_rate[a]) +
-                       '\n')
+                       '%\n')
     
     log_file.write("---------------------------------------------------\n\n")
     # .csv
@@ -242,7 +242,7 @@ def parametric_sim_vehicles_train_once(
     makeFigurePlot(
         n_vehicles, test_benefit, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
-    labels[1] = 'Testing success rate (/1)'
+    labels[1] = 'Testing success rate (%)'
     makeFigurePlot(
         n_vehicles, test_success_rate, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
@@ -276,7 +276,7 @@ def parametric_sim_vehicles_train_once(
                        str(train_avg_agent_times[a]) + '\n')
         log_file.write("-Test benefit:\n" + str(test_benefit[a]) + '\n')
         log_file.write("-Test success rate:\n" + str(test_success_rate[a]) +
-                       '\n')
+                       '%\n')
     
     log_file.write("---------------------------------------------------\n\n")
     # .csv
@@ -375,7 +375,7 @@ def parametric_sim_errorVar_train_per_test(
     makeFigurePlot(estimation_err_var, test_benefit, labels=labels,
                    legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
-    labels[1] = 'Testing success rate (/1)'
+    labels[1] = 'Testing success rate (%)'
     makeFigurePlot(estimation_err_var, test_success_rate, labels=labels,
                    legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
@@ -408,7 +408,7 @@ def parametric_sim_errorVar_train_per_test(
                        str(train_avg_agent_times[a]) + '\n')
         log_file.write("-Test benefit:\n" + str(test_benefit[a]) + '\n')
         log_file.write("-Test success rate:\n" + str(test_success_rate[a]) +
-                       '\n')
+                       '%\n')
     
     log_file.write("---------------------------------------------------\n\n")
     # .csv
@@ -504,7 +504,7 @@ def parametric_sim_errorVar_train_once(
     makeFigurePlot(
         estimation_err_var, test_benefit, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
-    labels[1] = 'Testing success rate (/1)'
+    labels[1] = 'Testing success rate (%)'
     makeFigurePlot(
         estimation_err_var, test_success_rate, labels=labels, legend=legend)
     plt.savefig(results_path + labels[1] + '.svg')
@@ -538,7 +538,7 @@ def parametric_sim_errorVar_train_once(
                        str(train_avg_agent_times[a]) + '\n')
         log_file.write("-Test benefit:\n" + str(test_benefit[a]) + '\n')
         log_file.write("-Test success rate:\n" + str(test_success_rate[a]) +
-                       '\n')
+                       '%\n')
     
     log_file.write("---------------------------------------------------\n\n")
     # .csv
@@ -625,20 +625,21 @@ if(__name__ == "__main__"):
     epsilons = 0.2
     
     # Define the number of replicas
-    repetitions = 1
+    repetitions = 4
     
     # Run simulation
+    """
     parametric_sim_vehicles_train_per_test(
         env, env.topology_label, n_vehicles, default_est_err_var,
         upper_var_limit, lower_var_limit, gammas=gammas, alg=alg,
         explorators=explorators, epsilons=epsilons, repetitions=repetitions)
-    
+    """
     parametric_sim_vehicles_train_once(
         env, env.topology_label, n_vehicles, train_vehicles,
         default_est_err_var, upper_var_limit, lower_var_limit, gammas=gammas,
         alg=alg, explorators=explorators, epsilons=epsilons,
         repetitions=repetitions)
-    
+    """
     parametric_sim_errorVar_train_per_test(
         env, env.topology_label, default_vehicles, estimation_err_var,
         upper_var_limit, lower_var_limit, gammas=gammas, alg=alg,
@@ -649,4 +650,5 @@ if(__name__ == "__main__"):
         train_est_err_var, upper_var_limit, lower_var_limit, gammas=gammas,
         alg=alg, explorators=explorators, epsilons=epsilons,
         repetitions=repetitions)
+    """
 
