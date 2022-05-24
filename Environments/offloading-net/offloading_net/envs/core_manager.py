@@ -256,7 +256,7 @@ class core_manager():
                 self.reserv_end[node][core] -= app_time
                 self.reserv_end[node][core].round(
                     decimals=self.precision_limit,
-                    out=self.reserv_start[node][core])
+                    out=self.reserv_end[node][core])
                 
                 # Check if any reservation started processing
                 started = len(np.where(self.reserv_start[node][core] < 0)[0])

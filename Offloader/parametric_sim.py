@@ -633,22 +633,22 @@ if(__name__ == "__main__"):
         env, env.topology_label, n_vehicles, default_est_err_var,
         upper_var_limit, lower_var_limit, gammas=gammas, alg=alg,
         explorators=explorators, epsilons=epsilons, repetitions=repetitions)
-    """
+    
     parametric_sim_vehicles_train_once(
         env, env.topology_label, n_vehicles, train_vehicles,
         default_est_err_var, upper_var_limit, lower_var_limit, gammas=gammas,
         alg=alg, explorators=explorators, epsilons=epsilons,
         repetitions=repetitions)
-    """
+    
     parametric_sim_errorVar_train_per_test(
         env, env.topology_label, default_vehicles, estimation_err_var,
         upper_var_limit, lower_var_limit, gammas=gammas, alg=alg,
         explorators=explorators, epsilons=epsilons, repetitions=repetitions)
-    
+    """
     parametric_sim_errorVar_train_once(
         env, env.topology_label, default_vehicles, estimation_err_var,
         train_est_err_var, upper_var_limit, lower_var_limit, gammas=gammas,
         alg=alg, explorators=explorators, epsilons=epsilons,
         repetitions=repetitions)
-    """
+    
 

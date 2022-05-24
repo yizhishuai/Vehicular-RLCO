@@ -67,7 +67,7 @@ def train_scenario(env, agents):
     log_file.write('---TRAINING---\n')
     # Number of time steps to assume a stationary state in the network
     start_up = 1000
-    n_time_steps = 410000 # For 10^-3 precision -> ~10^5 sample points
+    n_time_steps = 1010000 # For 10^-3 precision -> ~10^5 sample points
     # Number of last episodes to use for average reward calculation
     averaging_window = 10000
     x_axis = range(1, start_up+n_time_steps+1) # X axis for ploting results
@@ -406,30 +406,14 @@ def test_scenario(env, agents):
             log_file.write('   |-> Delays: ' + str(batch_app_delay_avg[a]) +
                            '\n')
         
-        """
-        # Look for best performing agent (based on average delays)
-        best = sum(batch_app_delay_avg[0])
-        best_agent = 0
-        for a in range(1, len(agents[batch])):
-            temp = sum(batch_app_delay_avg[a])
-            if(best > temp):
-                best_agent = a
-                best = temp
-        """
         # Look for best performing agent (based on success rate)
         best_agent = batch_success_rate.index(max(batch_success_rate))
         
         # Calculate the averages of benefits
-        #test_benefit.append(sum(batch_benefit)/len(batch_benefit))
         test_benefit.append(batch_benefit[best_agent])
         
         # Calculate the averages of successfully processed applications
-        #test_success_rate.append(
-        #    sum(batch_success_rate)/len(batch_success_rate))
         test_success_rate.append(batch_success_rate[best_agent])
-        #test_success_rate_per_app.append(
-        #    np.sum(batch_success_rate_per_app, axis=0)/
-        #    len(batch_success_rate_per_app))
         test_success_rate_per_app.append(
             batch_success_rate_per_app[best_agent])
         
@@ -491,7 +475,7 @@ if(__name__ == "__main__"):
     epsilons = 0.2
     
     # Define the number of replicas
-    repetitions = 2
+    repetitions = 1
     
     # Create agents
     agents = make_training_agents(
