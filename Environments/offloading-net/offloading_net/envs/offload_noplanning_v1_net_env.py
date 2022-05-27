@@ -133,7 +133,7 @@ class offload_noplanning_v1_netEnv(gym.Env):
         self.core_manager = core_manager(estimation_err_var, upper_var_limit,
                                          lower_var_limit, reserv_limit,
                                          self.precision_limit,
-                                         self.precision_limit)
+                                         self.precision_margin)
         
         # The observation space has an element per core in the network (with
         # the exception of vehicles, where only one is observable at a time)

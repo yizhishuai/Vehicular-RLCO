@@ -420,6 +420,7 @@ class core_manager():
         # Next adjacent time slot (if it exists)
         slot = np.where(self.isEqual(self.slots_start[node][core],
                                      self.reserv_end[node][core][i]))
+        
         # Next time slot (must exist)
         if(len(slot[0])):
             next_slot = slot
@@ -448,6 +449,7 @@ class core_manager():
                     self.reserv_end[node][core][i])
                 self.slots_duration[node][core] = np.insert(
                     self.slots_duration[node][core], next_slot[0][0], -var)
+        
         elif(var > 0): # If the processing took longer than expected
             while(1): # This loop has to reach a break line
                 # Check that the queue is still within limits
