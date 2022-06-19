@@ -118,8 +118,8 @@ class max_distance_agent:
         # Find the corresponding RSU and MEC nodes (in case there is multiple)
         # by looking at the path to the cloud node
         path = self.env.get_path(0)
-        MEC = path[1]
-        RSU = path[2]
+        MEC = path[1] - 1
+        RSU = path[2] - 1
         # Check starting from the furthest nodes (lowest actions) whether the
         # estimated delay is under the max tolerable delay (consider only
         # current network branch)
