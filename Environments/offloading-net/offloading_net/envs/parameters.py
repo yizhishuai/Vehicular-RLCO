@@ -72,7 +72,7 @@ vehicle_nodes = n_nodes - net_nodes
 n_vehicles = 50
 
 # Default variation coeficient of error in estimation of processing time
-estimation_err_var = 1
+estimation_err_var = 0
 # Limits to variation of times
 upper_var_limit = 1 # Percentage out of corresponding total time
 lower_var_limit = 0 # Percentage out of corresponding total time

@@ -67,7 +67,7 @@ def train_scenario(env, agents):
     log_file.write('---TRAINING---\n')
     # Number of time steps to assume a stationary state in the network
     start_up = 1000
-    n_time_steps = 1010000 # For 10^-3 precision -> ~10^5 sample points
+    n_time_steps = 2010000 # For 10^-3 precision -> ~10^5 sample points
     # Number of last episodes to use for average reward calculation
     averaging_window = 10000
     x_axis = range(1, start_up+n_time_steps+1) # X axis for ploting results
@@ -468,11 +468,11 @@ if(__name__ == "__main__"):
     gammas = 0.995
     
     # Algorithms to be used
-    alg = ['DDQN']
+    alg = ['DDQN','SARSA','PAL','TRPO']
     
     # Explorations that are to be analized (in algorithms that use them)
     explorators = 'const'
-    epsilons = 0.2
+    epsilons = 0.1
     
     # Define the number of replicas
     repetitions = 1

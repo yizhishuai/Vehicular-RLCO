@@ -622,7 +622,7 @@ if(__name__ == "__main__"):
     
     # Explorations that are to be analized (in algorithms that use them)
     explorators = 'const'
-    epsilons = 0.2
+    epsilons = 0.1
     
     # Define the number of replicas
     repetitions = 4

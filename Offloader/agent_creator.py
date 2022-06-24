@@ -13,15 +13,17 @@ import chainer.functions as F
 # Q-function definition
 class QFunction(chainer.Chain):
     
-    def __init__(self, obs_size, n_actions, n_hidden_channels=60):
+    def __init__(self, obs_size, n_actions, n_hidden_channels=90):
         super().__init__()
         with self.init_scope():
             self.l0 = L.Linear(obs_size, n_hidden_channels)
-            self.l1 = L.Linear(n_hidden_channels, n_actions)
+            self.l1 = L.Linear(n_hidden_channels, n_hidden_channels)
+            self.l2 = L.Linear(n_hidden_channels, n_actions)
     
     def __call__(self, obs, test=False):
-        h = F.tanh(self.l0(obs))
-        return chainerrl.action_value.DiscreteActionValue(self.l1(h))
+        h0 = F.tanh(self.l0(obs))
+        h1 = F.tanh(self.l1(h0))
+        return chainerrl.action_value.DiscreteActionValue(self.l2(h1))
 
 # Funtion that instances an agent with certain parameters
 def create_agent(
@@ -163,7 +165,7 @@ def create_agent(
     elif(alg in 'TRPO'):
         # Policy
         policy = chainerrl.policies.FCSoftmaxPolicy(
-                obs_size, n_actions, n_hidden_channels=60, n_hidden_layers=1,
+                obs_size, n_actions, n_hidden_channels=90, n_hidden_layers=2,
                 last_wscale=0.01, nonlinearity=F.tanh)
         
         # Value function
